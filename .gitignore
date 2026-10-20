@@ -2,5 +2,6 @@
 # Copyright (C) 2026 Thalles Campagnani
 # build outputs of implementation/src/Makefile and tools/vehicle
 rengineering/
+implementation/build/
 __pycache__/
 *.pyc

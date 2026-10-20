@@ -1,0 +1,940 @@
+SPDX-License-Identifier: GPL-2.0-or-later
+Copyright (C) 2026 Thalles Campagnani
+
+board/spacemit/k1: validation vehicle for the K1 DDR firmware
+
+Hooks used by tools/vehicle/build-vehicle.sh on top of mainline U-Boot
+8d534cec0cc: re-train test, open-firmware blob embedding, eMMC monitor,
+software reset back to the BootROM, data_rate override and ymodem boot.
+Licensed GPL-2.0-or-later, like U-Boot, so the files can live in its tree.
+
+diff --git a/board/spacemit/k1/Makefile b/board/spacemit/k1/Makefile
+index a57af2e..2527e19 100644
+--- a/board/spacemit/k1/Makefile
++++ b/board/spacemit/k1/Makefile
+@@ -26,3 +26,49 @@ $(FW_TARGET): FORCE
+ 	fi
+ 
+ clean-files += $(FW_TARGET)
++
++# validation only: re-train with the open DDR firmware after ddr_fw.bin
++ifneq ($(DDR_GPL_FILE),)
++obj-$(CONFIG_SPL_BUILD) += ddr_gpl_test.o ddr_gpl_blob.o
++CFLAGS_spl.o += -DK1_DDR_GPL_TEST
++AFLAGS_ddr_gpl_blob.o += -Wa,-I$(objtree)
++# DDR_FW_FILE is the open firmware too: it brings DDR up from power-on
++ifneq ($(DDR_GPL_FULL),)
++CFLAGS_spl.o += -DK1_DDR_GPL_FULL
++CFLAGS_ddr_gpl_test.o += -DK1_DDR_GPL_FULL
++endif
++# hand the board back to the BootROM after the run (doc 32)
++ifneq ($(K1_VEHICLE_RESET),)
++obj-$(CONFIG_SPL_BUILD) += vehicle_reset.o
++CFLAGS_ddr_gpl_test.o += -DK1_VEHICLE_RESET
++CFLAGS_spl.o += -DK1_VEHICLE_RESET
++endif
++# DRAM load latency before K1DDRT-DONE
++ifneq ($(K1_VEHICLE_LAT),)
++CFLAGS_ddr_gpl_test.o += -DK1_VEHICLE_LAT
++endif
++GPL_TARGET = $(objtree)/ddr_gpl.bin
++
++$(obj)/ddr_gpl_blob.o: $(GPL_TARGET)
++
++$(GPL_TARGET): FORCE
++	@cp "$(DDR_GPL_FILE)" $@
++
++clean-files += $(GPL_TARGET)
++endif
++
++# validation only: data_rate handed to ddr_init instead of the EEPROM one
++ifneq ($(K1_VEHICLE_RATE),)
++CFLAGS_spl.o += -DK1_VEHICLE_RATE=$(K1_VEHICLE_RATE)
++endif
++
++# validation only: next stage over ymodem, needs CONFIG_SPL_YMODEM_SUPPORT
++ifneq ($(K1_VEHICLE_UART),)
++CFLAGS_spl.o += -DK1_VEHICLE_UART
++endif
++
++# validation only: eMMC monitor on the UART, needs CONFIG_SPL_MMC_WRITE
++ifneq ($(K1_EMMC_TOOL),)
++obj-$(CONFIG_SPL_BUILD) += emmc_tool.o
++CFLAGS_spl.o += -DK1_EMMC_TOOL
++endif
+diff --git a/board/spacemit/k1/ddr_gpl_blob.S b/board/spacemit/k1/ddr_gpl_blob.S
+new file mode 100644
+index 0000000..cd338b7
+--- /dev/null
++++ b/board/spacemit/k1/ddr_gpl_blob.S
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++/* Copyright (C) 2026 Thalles Campagnani */
++/* open DDR firmware image, copied from $(DDR_GPL_FILE) into the objtree */
++	.section .rodata.k1_ddr_gpl, "a"
++	.balign	64
++	.globl	k1_ddr_gpl_blob
++	.globl	k1_ddr_gpl_blob_end
++k1_ddr_gpl_blob:
++	.incbin	"ddr_gpl.bin"
++k1_ddr_gpl_blob_end:
+diff --git a/board/spacemit/k1/ddr_gpl_test.c b/board/spacemit/k1/ddr_gpl_test.c
+new file mode 100644
+index 0000000..c97e51b
+--- /dev/null
++++ b/board/spacemit/k1/ddr_gpl_test.c
+@@ -0,0 +1,246 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++// Copyright (C) 2026 Thalles Campagnani
++/*
++ * Validation hook for the open K1 DDR firmware. Once ddr_fw.bin has brought
++ * DDR up, the open firmware is copied over it at DDR_FIRMWARE_BASE and its
++ * re-train entry trains the running frequency point again. DRAM is checked
++ * before and after: content kept across the pass, and fresh writes.
++ */
++
++#include <asm/csr.h>
++#include <asm/io.h>
++#include <cpu_func.h>
++#include <linux/string.h>
++#include <linux/types.h>
++#include <stdio.h>
++#include "ddr_gpl_test.h"
++#ifdef K1_VEHICLE_RESET
++#include "vehicle_reset.h"
++#endif
++
++#define DDR_FIRMWARE_BASE	0xc082d000UL
++#define DDR_CTRL_BASE		0xc0000000UL
++#define PMU_BASE		0xd4282800UL
++#define GPL_RETRAIN_OFFSET	4
++#define GPL_MAGIC_OFFSET	8
++#define GPL_HEADER_SIZE		0x18
++#define PROBE_WORDS		16384
++#define MAX_PROBES		6
++#ifdef K1_DDR_GPL_FULL
++#define RETRAIN_ROUNDS		1
++#else
++#define RETRAIN_ROUNDS		3
++#endif
++#define DRAM_LOW_TOP		0x80000000ULL
++#define DRAM_HIGH_BASE		0x100000000ULL
++
++/* flags: bit 0 logs every Vref step from inside self-refresh */
++typedef int (*ddr_retrain_func_t)(u64 ddr_base, u32 cs_num,
++				  void (*puts_fn)(const char *s), u32 flags);
++
++extern const u8 k1_ddr_gpl_blob[], k1_ddr_gpl_blob_end[];
++
++static u64 cs_size(u32 map)
++{
++	if (!(map & 1))
++		return 0;
++	switch ((map >> 16) & 0x1f) {
++	case 0xd: return 512ULL << 20;
++	case 0x1: return 768ULL << 20;
++	case 0xe: return 1024ULL << 20;
++	case 0x2: return 1536ULL << 20;
++	case 0xf: return 2048ULL << 20;
++	case 0x3: return 3072ULL << 20;
++	case 0x10: return 4096ULL << 20;
++	case 0x11: return 8192ULL << 20;
++	case 0x12: return 16384ULL << 20;
++	default: return 0;
++	}
++}
++
++static int build_probes(u64 *probe)
++{
++	u64 total = cs_size(readl((void __iomem *)(DDR_CTRL_BASE + 0x200))) +
++		    cs_size(readl((void __iomem *)(DDR_CTRL_BASE + 0x208)));
++	u64 low = total < DRAM_LOW_TOP ? total : DRAM_LOW_TOP;
++	u64 high = total - low;
++	int n = 0;
++
++	printf("K1DDRT: %lu MiB mapped\n", (ulong)(total >> 20));
++	if (low) {
++		probe[n++] = 0x10000;
++		probe[n++] = low / 2;
++		probe[n++] = low - 0x10000;
++	}
++	if (high) {
++		probe[n++] = DRAM_HIGH_BASE;
++		probe[n++] = DRAM_HIGH_BASE + high / 2;
++		probe[n++] = DRAM_HIGH_BASE + high - 0x10000;
++	}
++	return n;
++}
++
++static u32 pattern(u64 addr, u32 i, u32 seed)
++{
++	return (u32)(addr >> 4) ^ (i * 0x9e3779b9U) ^ seed ^ (i << 16);
++}
++
++static void fill(u64 base, u32 seed)
++{
++	u32 *p = (u32 *)(uintptr_t)base;
++	u32 i;
++
++	for (i = 0; i < PROBE_WORDS; i++)
++		p[i] = pattern(base, i, seed);
++	flush_dcache_range(base, base + PROBE_WORDS * 4);
++}
++
++static u32 verify(u64 base, u32 seed)
++{
++	const u32 *p = (const u32 *)(uintptr_t)base;
++	u32 i, bad = 0;
++
++	invalidate_dcache_range(base, base + PROBE_WORDS * 4);
++	for (i = 0; i < PROBE_WORDS; i++)
++		if (p[i] != pattern(base, i, seed))
++			bad++;
++	return bad;
++}
++
++static void check_dram(const u64 *probe, int n, u32 old_seed, u32 new_seed)
++{
++	int i;
++
++	for (i = 0; i < n; i++) {
++		u32 kept = old_seed ? verify(probe[i], old_seed) : 0;
++		u32 fresh;
++
++		fill(probe[i], new_seed);
++		fresh = verify(probe[i], new_seed);
++		printf("K1DDRT: dram 0x%lx kept-errors %u fresh-errors %u\n",
++		       (ulong)probe[i], kept, fresh);
++	}
++}
++
++#ifdef K1_VEHICLE_LAT
++/* load-to-use latency: a chase of dependent loads through one cycle of nodes */
++#define CLINT_MTIME		0xe400bff8UL
++#define MTIME_PER_US		24
++#define LAT_BASE		0x10000000UL
++#define LAT_NODE		64
++#define LAT_LOADS		(1U << 20)
++#define LAT_NEXT(i)		(*(u64 *)(uintptr_t)(LAT_BASE + (u64)(i) * LAT_NODE))
++
++static u64 lat_rand(u64 *s)
++{
++	*s ^= *s << 13;
++	*s ^= *s >> 7;
++	*s ^= *s << 17;
++	return *s;
++}
++
++static void lat_build(u32 n, bool random)
++{
++	u64 s = 0x9e3779b97f4a7c15ULL;
++	u32 i;
++
++	for (i = 0; i < n; i++)
++		LAT_NEXT(i) = random ? i : (i + 1) % n;
++	/* Sattolo: a random permutation that is a single cycle */
++	for (i = n - 1; random && i > 0; i--) {
++		u32 j = lat_rand(&s) % i;
++		u64 t = LAT_NEXT(i);
++
++		LAT_NEXT(i) = LAT_NEXT(j);
++		LAT_NEXT(j) = t;
++	}
++	for (i = 0; i < n; i++)
++		LAT_NEXT(i) = LAT_BASE + LAT_NEXT(i) * LAT_NODE;
++	flush_dcache_range(LAT_BASE, LAT_BASE + (u64)n * LAT_NODE);
++}
++
++static u64 lat_chase(u64 p, u32 loads)
++{
++	u32 i;
++
++	for (i = 0; i < loads; i += 8) {
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++		p = *(volatile u64 *)(uintptr_t)p;
++	}
++	return p;
++}
++
++static void lat_run(const char *name, u32 n, bool random)
++{
++	u64 p, t0, c0, dt, dc;
++
++	lat_build(n, random);
++	p = lat_chase(LAT_BASE, n < LAT_LOADS ? n : LAT_LOADS);
++	t0 = readq((void __iomem *)CLINT_MTIME);
++	c0 = csr_read(CSR_CYCLE);
++	p = lat_chase(p, LAT_LOADS);
++	dc = csr_read(CSR_CYCLE) - c0;
++	dt = readq((void __iomem *)CLINT_MTIME) - t0;
++	dt = dt * 100000 / MTIME_PER_US / LAT_LOADS;
++	dc = dc * 100 / LAT_LOADS;
++	printf("K1DDRT: lat %s %u KiB: %lu.%02lu ns %lu.%02lu cycles per load, cpu %lu MHz\n",
++	       name, n * LAT_NODE >> 10, (ulong)(dt / 100), (ulong)(dt % 100),
++	       (ulong)(dc / 100), (ulong)(dc % 100), dt ? (ulong)(dc * 1000 / dt) : 0);
++}
++
++static void lat_test(void)
++{
++	lat_run("rand", (16 << 10) / LAT_NODE, true);
++	lat_run("rand", (256 << 10) / LAT_NODE, true);
++	lat_run("seq", (32 << 20) / LAT_NODE, false);
++	lat_run("rand", (32 << 20) / LAT_NODE, true);
++}
++#endif
++
++void k1_ddr_gpl_retrain_test(u32 cs_num)
++{
++	ulong size = k1_ddr_gpl_blob_end - k1_ddr_gpl_blob;
++	ddr_retrain_func_t retrain;
++	u64 probe[MAX_PROBES];
++	u32 seed = 0x5eed0000;
++	int n, round, rc;
++
++	printf("K1DDRT: open firmware %lu bytes, cs_num %u\n", size, cs_num);
++	printf("K1DDRT: pll1 0x%08x 0x%08x pll2 0x%08x clksel 0x%08x\n",
++	       readl((void __iomem *)(PMU_BASE + 0x39c)),
++	       readl((void __iomem *)(PMU_BASE + 0x3a0)),
++	       readl((void __iomem *)(PMU_BASE + 0x3a8)),
++	       readl((void __iomem *)(PMU_BASE + 0x3b4)));
++	if (size < GPL_HEADER_SIZE ||
++	    memcmp(k1_ddr_gpl_blob + GPL_MAGIC_OFFSET, "K1DDRGPL", 8)) {
++		printf("K1DDRT: bad open firmware image\n");
++		return;
++	}
++
++	n = build_probes(probe);
++	check_dram(probe, n, 0, seed);
++
++	memcpy((void *)DDR_FIRMWARE_BASE, k1_ddr_gpl_blob, size);
++	asm volatile ("fence.i" ::: "memory");
++	retrain = (ddr_retrain_func_t)(DDR_FIRMWARE_BASE + GPL_RETRAIN_OFFSET);
++
++	for (round = 0; round < RETRAIN_ROUNDS; round++) {
++		rc = retrain(DDR_CTRL_BASE, cs_num, puts, 0);
++		printf("K1DDRT: round %d rc %d\n", round, rc);
++		check_dram(probe, n, seed, seed + 1);
++		seed++;
++	}
++#ifdef K1_VEHICLE_LAT
++	lat_test();
++#endif
++	printf("K1DDRT-DONE\n");
++#ifdef K1_VEHICLE_RESET
++	k1_vehicle_reset();
++#endif
++}
+diff --git a/board/spacemit/k1/ddr_gpl_test.h b/board/spacemit/k1/ddr_gpl_test.h
+new file mode 100644
+index 0000000..60e07bc
+--- /dev/null
++++ b/board/spacemit/k1/ddr_gpl_test.h
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++/* Copyright (C) 2026 Thalles Campagnani */
++#ifndef __K1_DDR_GPL_TEST_H
++#define __K1_DDR_GPL_TEST_H
++
++#include <linux/types.h>
++
++void k1_ddr_gpl_retrain_test(u32 cs_num);
++
++#endif /* __K1_DDR_GPL_TEST_H */
+diff --git a/board/spacemit/k1/emmc_tool.c b/board/spacemit/k1/emmc_tool.c
+new file mode 100644
+index 0000000..4b1fe88
+--- /dev/null
++++ b/board/spacemit/k1/emmc_tool.c
+@@ -0,0 +1,352 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++// Copyright (C) 2026 Thalles Campagnani
++/*
++ * Validation-vehicle eMMC monitor on the UART, run from spl_board_init():
++ * look at the boot areas, copy them to the host and clear the FSBL, so the
++ * BootROM falls back to USB download. One command per line; every answer
++ * ends with the prompt.
++ *
++ *   info                          card and EXT_CSD boot fields
++ *   scan <part> <blk> <count>     a line per 64 KiB: crc32, kind, extent
++ *   dump <part> <blk> <count>     a line per block or 64 bytes, then crc32
++ *   zero <part> <blk> <count>     write zeros and read them back
++ *   quit                          leave, SPL goes on
++ *
++ * part: 0 user area, 1 boot0, 2 boot1. In the user area only blocks
++ * 34..8191 are writable: the GPT and everything past 4 MiB stay out of reach.
++ */
++
++#include <blk.h>
++#include <mmc.h>
++#include <stdio.h>
++#include <vsprintf.h>
++#include <dm/device.h>
++#include <linux/ctype.h>
++#include <linux/string.h>
++#include <linux/types.h>
++#include <u-boot/crc.h>
++#include "emmc_tool.h"
++
++#define EMMC_NAME	"mmc@d4281000"
++#define PROMPT		"K1EMMC> "
++#define BLK_SIZE	512
++#define CHUNK_BLKS	128
++#define LINE_BYTES	64
++#define USER_WR_FIRST	34
++#define USER_WR_END	8192
++#define MAX_ARGS	4
++
++/* DDR scratch, clear of the SPL stack, malloc and FIT load area */
++#define RD_BUF		((u8 *)0x20000000UL)
++#define ZERO_BUF	((u8 *)0x20100000UL)
++
++enum fill { FILL_ZERO, FILL_FF, FILL_DATA };
++
++/* first/last: offsets of the first and last non-zero byte */
++static enum fill fill_of(const u8 *p, ulong len, ulong *first, ulong *last)
++{
++	bool ff = true;
++	ulong i;
++
++	*first = len;
++	*last = 0;
++	for (i = 0; i < len; i++) {
++		if (p[i] != 0xff)
++			ff = false;
++		if (p[i]) {
++			if (*first == len)
++				*first = i;
++			*last = i;
++		}
++	}
++	if (*first == len) {
++		*first = 0;
++		return FILL_ZERO;
++	}
++	return ff ? FILL_FF : FILL_DATA;
++}
++
++static const char *fill_name(enum fill f)
++{
++	return f == FILL_ZERO ? "zero" : f == FILL_FF ? "ff" : "data";
++}
++
++static void put_hex(const u8 *p, ulong len)
++{
++	static const char digits[] = "0123456789abcdef";
++	char line[2 * LINE_BYTES + 1];
++	ulong i;
++
++	for (i = 0; i < len; i++) {
++		line[2 * i] = digits[p[i] >> 4];
++		line[2 * i + 1] = digits[p[i] & 15];
++	}
++	line[2 * len] = '\0';
++	puts(line);
++}
++
++static struct mmc *emmc_open(void)
++{
++	struct mmc *mmc;
++	int ret;
++
++	ret = mmc_init_device(0);
++	if (ret) {
++		printf("E mmc0 probe %d\n", ret);
++		return NULL;
++	}
++	mmc = find_mmc_device(0);
++	if (!mmc) {
++		printf("E mmc0 missing\n");
++		return NULL;
++	}
++	if (strcmp(mmc->dev->name, EMMC_NAME)) {
++		printf("E mmc0 is %s, not " EMMC_NAME "\n", mmc->dev->name);
++		return NULL;
++	}
++	ret = mmc_init(mmc);
++	if (ret) {
++		printf("E mmc_init %d\n", ret);
++		return NULL;
++	}
++	if (IS_SD(mmc) || !mmc->ext_csd) {
++		printf("E %s is not an eMMC\n", mmc->dev->name);
++		return NULL;
++	}
++	return mmc;
++}
++
++static struct blk_desc *emmc_part(struct mmc *mmc, ulong part, ulong blk,
++				  ulong count)
++{
++	struct blk_desc *desc = mmc_get_blk_desc(mmc);
++	int ret;
++
++	if (part > 2) {
++		printf("E part %lu: 0 user, 1 boot0, 2 boot1\n", part);
++		return NULL;
++	}
++	ret = blk_dselect_hwpart(desc, part);
++	if (ret) {
++		printf("E select part %lu: %d\n", part, ret);
++		return NULL;
++	}
++	if (!count || blk >= desc->lba || count > desc->lba - blk) {
++		printf("E range 0x%lx+0x%lx past 0x%lx blocks\n", blk, count,
++		       (ulong)desc->lba);
++		return NULL;
++	}
++	return desc;
++}
++
++static bool read_blocks(struct blk_desc *desc, ulong blk, ulong n, u8 *buf)
++{
++	ulong got = blk_dread(desc, blk, n, buf);
++
++	if (got != n) {
++		printf("E read 0x%lx+0x%lx: got 0x%lx\n", blk, n, got);
++		return false;
++	}
++	return true;
++}
++
++static void cmd_info(struct mmc *mmc)
++{
++	const u8 *x = mmc->ext_csd;
++
++	/* the SPL printf has no %llx; ulong is 64 bits here */
++	printf("I name %s rev %u user_blocks 0x%lx boot_bytes 0x%lx\n",
++	       mmc->dev->name, x[EXT_CSD_REV],
++	       (ulong)(mmc->capacity_user / BLK_SIZE),
++	       (ulong)mmc->capacity_boot);
++	printf("I part_conf 0x%02x boot_enable %u access %u boot_bus 0x%02x\n",
++	       x[EXT_CSD_PART_CONF],
++	       EXT_CSD_EXTRACT_BOOT_PART(x[EXT_CSD_PART_CONF]),
++	       EXT_CSD_EXTRACT_PARTITION_ACCESS(x[EXT_CSD_PART_CONF]),
++	       x[EXT_CSD_BOOT_BUS_WIDTH]);
++	printf("I boot_wp 0x%02x boot_wp_status 0x%02x boot_mult %u rpmb_mult %u\n",
++	       x[EXT_CSD_BOOT_WP], x[EXT_CSD_BOOT_WP_STATUS],
++	       x[EXT_CSD_BOOT_MULT], x[EXT_CSD_RPMB_MULT]);
++}
++
++static void cmd_scan(struct mmc *mmc, ulong part, ulong blk, ulong count)
++{
++	struct blk_desc *desc = emmc_part(mmc, part, blk, count);
++	ulong end = blk + count, first, last, n;
++	enum fill f;
++
++	if (!desc)
++		return;
++	for (; blk < end; blk += n) {
++		n = min(end - blk, (ulong)CHUNK_BLKS);
++		if (!read_blocks(desc, blk, n, RD_BUF))
++			return;
++		f = fill_of(RD_BUF, n * BLK_SIZE, &first, &last);
++		printf("S %lu 0x%06lx 0x%03lx %08x %-4s 0x%05lx 0x%05lx ", part,
++		       blk, n, crc32(0, RD_BUF, n * BLK_SIZE), fill_name(f),
++		       first, last);
++		put_hex(RD_BUF, 16);
++		puts("\n");
++	}
++}
++
++static void cmd_dump(struct mmc *mmc, ulong part, ulong blk, ulong count)
++{
++	struct blk_desc *desc = emmc_part(mmc, part, blk, count);
++	ulong end = blk + count, start = blk, first, last, n, b, off;
++	u32 crc = 0;
++	const u8 *p;
++
++	if (!desc)
++		return;
++	for (; blk < end; blk += n) {
++		n = min(end - blk, (ulong)CHUNK_BLKS);
++		if (!read_blocks(desc, blk, n, RD_BUF))
++			return;
++		crc = crc32(crc, RD_BUF, n * BLK_SIZE);
++		for (b = 0; b < n; b++) {
++			p = RD_BUF + b * BLK_SIZE;
++			switch (fill_of(p, BLK_SIZE, &first, &last)) {
++			case FILL_ZERO:
++				printf("Z 0x%06lx\n", blk + b);
++				continue;
++			case FILL_FF:
++				printf("F 0x%06lx\n", blk + b);
++				continue;
++			case FILL_DATA:
++				break;
++			}
++			for (off = 0; off < BLK_SIZE; off += LINE_BYTES) {
++				printf("D 0x%06lx 0x%03lx ", blk + b, off);
++				put_hex(p + off, LINE_BYTES);
++				puts("\n");
++			}
++		}
++	}
++	printf("C %lu 0x%06lx 0x%06lx %08x\n", part, start, count, crc);
++}
++
++static bool zero_allowed(ulong part, ulong blk, ulong count)
++{
++	if (part != 0)
++		return true;
++	if (blk >= USER_WR_FIRST && blk < USER_WR_END &&
++	    count <= USER_WR_END - blk)
++		return true;
++	printf("E user area writes only inside 0x%x..0x%x\n", USER_WR_FIRST,
++	       USER_WR_END - 1);
++	return false;
++}
++
++static void cmd_zero(struct mmc *mmc, ulong part, ulong blk, ulong count)
++{
++	struct blk_desc *desc;
++	ulong end = blk + count, start = blk, first, last, n, wrote, bad = 0;
++
++	if (!zero_allowed(part, blk, count))
++		return;
++	desc = emmc_part(mmc, part, blk, count);
++	if (!desc)
++		return;
++	memset(ZERO_BUF, 0, CHUNK_BLKS * BLK_SIZE);
++	for (; blk < end; blk += n) {
++		n = min(end - blk, (ulong)CHUNK_BLKS);
++		wrote = blk_dwrite(desc, blk, n, ZERO_BUF);
++		if (wrote != n) {
++			printf("E write 0x%lx+0x%lx: wrote 0x%lx\n", blk, n,
++			       wrote);
++			return;
++		}
++	}
++	for (blk = start; blk < end; blk += n) {
++		n = min(end - blk, (ulong)CHUNK_BLKS);
++		if (!read_blocks(desc, blk, n, RD_BUF))
++			return;
++		if (fill_of(RD_BUF, n * BLK_SIZE, &first, &last) != FILL_ZERO)
++			bad++;
++	}
++	printf("W %lu 0x%06lx 0x%06lx %s\n", part, start, count,
++	       bad ? "VERIFY-FAILED" : "zeroed");
++}
++
++static int read_line(char *buf, int size)
++{
++	int n = 0, c;
++
++	for (;;) {
++		c = getchar();
++		if (c == '\r' || c == '\n') {
++			if (!n)
++				continue;
++			buf[n] = '\0';
++			puts("\n");
++			return n;
++		}
++		if ((c == '\b' || c == 0x7f) && n) {
++			n--;
++			puts("\b \b");
++			continue;
++		}
++		if (isprint(c) && n < size - 1) {
++			buf[n++] = c;
++			putc(c);
++		}
++	}
++}
++
++static int split(char *line, char **argv)
++{
++	int argc = 0;
++
++	while (*line && argc < MAX_ARGS) {
++		while (*line == ' ')
++			*line++ = '\0';
++		if (!*line)
++			break;
++		argv[argc++] = line;
++		while (*line && *line != ' ')
++			line++;
++	}
++	return argc;
++}
++
++void k1_emmc_tool(void)
++{
++	char line[80], *argv[MAX_ARGS];
++	ulong a[3] = { 0 };
++	struct mmc *mmc;
++	int argc, i;
++
++	puts("K1EMMC: monitor\n");
++	mmc = emmc_open();
++	if (!mmc) {
++		puts("K1EMMC: no eMMC, leaving\n");
++		return;
++	}
++	cmd_info(mmc);
++	for (;;) {
++		puts(PROMPT);
++		read_line(line, sizeof(line));
++		argc = split(line, argv);
++		if (!argc)
++			continue;
++		for (i = 1; i < argc; i++)
++			a[i - 1] = simple_strtoul(argv[i], NULL, 0);
++		if (!strcmp(argv[0], "quit"))
++			break;
++		if (!strcmp(argv[0], "info"))
++			cmd_info(mmc);
++		else if (argc != 4)
++			puts("E usage: scan|dump|zero <part> <blk> <count>\n");
++		else if (!strcmp(argv[0], "scan"))
++			cmd_scan(mmc, a[0], a[1], a[2]);
++		else if (!strcmp(argv[0], "dump"))
++			cmd_dump(mmc, a[0], a[1], a[2]);
++		else if (!strcmp(argv[0], "zero"))
++			cmd_zero(mmc, a[0], a[1], a[2]);
++		else
++			printf("E unknown command %s\n", argv[0]);
++	}
++	blk_dselect_hwpart(mmc_get_blk_desc(mmc), 0);
++	puts("K1EMMC: bye\n");
++}
+diff --git a/board/spacemit/k1/emmc_tool.h b/board/spacemit/k1/emmc_tool.h
+new file mode 100644
+index 0000000..dc27ddf
+--- /dev/null
++++ b/board/spacemit/k1/emmc_tool.h
+@@ -0,0 +1,8 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++/* Copyright (C) 2026 Thalles Campagnani */
++#ifndef __K1_EMMC_TOOL_H
++#define __K1_EMMC_TOOL_H
++
++void k1_emmc_tool(void);
++
++#endif /* __K1_EMMC_TOOL_H */
+diff --git a/board/spacemit/k1/spl.c b/board/spacemit/k1/spl.c
+index ef23db6..85aac9d 100644
+--- a/board/spacemit/k1/spl.c
++++ b/board/spacemit/k1/spl.c
+@@ -22,6 +22,15 @@
+ #include <spl.h>
+ #include <tlv_eeprom.h>
+ #include "tlv_codes.h"
++#ifdef K1_DDR_GPL_TEST
++#include "ddr_gpl_test.h"
++#endif
++#ifdef K1_VEHICLE_RESET
++#include "vehicle_reset.h"
++#endif
++#ifdef K1_EMMC_TOOL
++#include "emmc_tool.h"
++#endif
+ 
+ /* boot mode configs */
+ #define BOOT_DEV_FLAG_REG	0xd4282d10
+@@ -392,12 +401,32 @@ void ddr_early_init(void)
+ 	asm volatile ("fence.i" ::: "memory");
+ 
+ 	read_ddr_info(&cfg);
++#ifdef K1_VEHICLE_RATE
++	/* validation only: ask the DDR firmware for another rate */
++	cfg.data_rate = K1_VEHICLE_RATE;
++#endif
+ 	ddr_init = (ddr_init_func_t)DDR_FIRMWARE_BASE;
+-#ifdef DEBUG
++	int rc = 0;
++
++#if defined(K1_DDR_GPL_FULL)
++	rc = ddr_init(0xc0000000, cfg.cs_num, cfg.data_rate, puts);
++	printf("K1DDRT: ddr_init rc %d\n", rc);
++#elif defined(DEBUG)
+ 	ddr_init(0xc0000000, cfg.cs_num, cfg.data_rate, puts);
+ #else
+ 	ddr_init(0xc0000000, cfg.cs_num, cfg.data_rate, NULL);
+ #endif
++	if (rc) {
++		/* DRAM was never mapped: do not poke address 0 or re-train */
++		log_info("DDR is not ready\n");
++#ifdef K1_DDR_GPL_TEST
++		printf("K1DDRT-DONE\n");
++#ifdef K1_VEHICLE_RESET
++		k1_vehicle_reset();
++#endif
++#endif
++		return;
++	}
+ 	writel(MAGIC_NUM, (void __iomem *)0x00000000);
+ 	flush_dcache_range(0, 64);
+ 	invalidate_dcache_range(0, 64);
+@@ -405,6 +434,9 @@ void ddr_early_init(void)
+ 		log_info("DDR is ready\n");
+ 	else
+ 		log_info("DDR is not ready\n");
++#ifdef K1_DDR_GPL_TEST
++	k1_ddr_gpl_retrain_test(cfg.cs_num);
++#endif
+ }
+ 
+ void nor_early_init(void)
+@@ -459,6 +491,10 @@ u32 spl_boot_device(void)
+ 	u32 mode;
+ 	int ret;
+ 
++#ifdef K1_VEHICLE_UART
++	/* validation only: U-Boot proper over ymodem into the trained DRAM */
++	return BOOT_DEVICE_UART;
++#endif
+ 	mode = read_boot_mode();
+ 	switch (mode) {
+ 	case BOOT_MODE_EMMC:
+@@ -486,6 +522,9 @@ u32 spl_boot_device(void)
+ 
+ void spl_board_init(void)
+ {
++#ifdef K1_EMMC_TOOL
++	k1_emmc_tool();
++#endif
+ }
+ 
+ int board_fit_config_name_match(const char *name)
+diff --git a/board/spacemit/k1/vehicle_reset.c b/board/spacemit/k1/vehicle_reset.c
+new file mode 100644
+index 0000000..957e622
+--- /dev/null
++++ b/board/spacemit/k1/vehicle_reset.c
+@@ -0,0 +1,115 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++// Copyright (C) 2026 Thalles Campagnani
++/*
++ * Validation only (cleanroom doc 32, P-17): once a run is over, hand the
++ * board back to the BootROM so FDL can load the next image without anyone
++ * pressing RST. The host picks the path on the UART:
++ *
++ *   p  PMIC P1 SW_RST: rails drop, as the RST button (default)
++ *   w  SoC watchdog, MMIO only
++ *   h  no reset, the SPL carries on
++ */
++
++#include <asm/io.h>
++#include <dm/uclass.h>
++#include <linux/bitops.h>
++#include <linux/delay.h>
++#include <power/pmic.h>
++#include <power/spacemit_p1.h>
++#include <stdio.h>
++#include <time.h>
++#include "vehicle_reset.h"
++
++/* "sys" of the BootROM banner; the SPL keeps its boot mode there */
++#define BOOT_FLAG_REG		0xd4282d10
++
++#define MPMU_BASE		0xd4050000UL
++#define MPMU_WDTPCR		(MPMU_BASE + 0x200)
++#define WDTPCR_CLKS		(BIT(0) | BIT(1))
++#define WDTPCR_RST		BIT(2)
++#define MPMU_WDT_START		(MPMU_BASE + 0x1020)
++#define WDT_START		BIT(4)
++
++#define WDT_BASE		0xd4080000UL
++#define WDT_UNLOCK1		0xb0
++#define WDT_UNLOCK2		0xb4
++#define WDT_ENABLE		0xb8
++#define WDT_MATCH		0xbc
++#define WDT_STATUS		0xc0
++#define WDT_RESET_EN		0xc8
++
++#define CHOICE_MS		3000
++#define RESET_WAIT_MS		1000
++
++/* every WDT write needs the unlock pair right before it */
++static void wdt_write(u32 off, u32 val)
++{
++	writel(0xbaba, (void __iomem *)(WDT_BASE + WDT_UNLOCK1));
++	writel(0xeb10, (void __iomem *)(WDT_BASE + WDT_UNLOCK2));
++	writel(val, (void __iomem *)(WDT_BASE + off));
++}
++
++static void reset_wdt(void)
++{
++	/* the SPL's boot mode would otherwise survive into the next BootROM */
++	writel(0, (void __iomem *)BOOT_FLAG_REG);
++	setbits_le32((void __iomem *)MPMU_WDTPCR, WDTPCR_CLKS);
++	clrbits_le32((void __iomem *)MPMU_WDTPCR, WDTPCR_RST);
++	wdt_write(WDT_STATUS, 0);
++	wdt_write(WDT_MATCH, 1);
++	wdt_write(WDT_ENABLE, 3);
++	wdt_write(WDT_RESET_EN, 1);
++	setbits_le32((void __iomem *)MPMU_WDT_START, WDT_START);
++}
++
++static int reset_p1(void)
++{
++	struct udevice *dev;
++	int ret;
++
++	ret = uclass_get_device(UCLASS_PMIC, 0, &dev);
++	if (ret)
++		return ret;
++	/* a reboot, not a charger wake-up */
++	ret = pmic_clrsetbits(dev, P1_REG_ALIVE, 0, BIT(SYS_REBOOT_FLAG_BIT));
++	if (ret)
++		return ret;
++	return pmic_clrsetbits(dev, P1_PWR_CTRL2, 0, P1_SW_RST);
++}
++
++static int read_choice(void)
++{
++	ulong start = get_timer(0);
++
++	while (get_timer(start) < CHOICE_MS) {
++		if (tstc())
++			return getchar();
++	}
++	return 'p';
++}
++
++void k1_vehicle_reset(void)
++{
++	int c, ret;
++
++	printf("K1VEH: sys 0x%08x\n", readl((void __iomem *)BOOT_FLAG_REG));
++	printf("K1VEH: reset? p = PMIC, w = SoC WDT, h = halt\n");
++	c = read_choice();
++	if (c == 'h') {
++		printf("K1VEH: no reset\n");
++		return;
++	}
++	if (c == 'w') {
++		printf("K1VEH: reset by SoC WDT\n");
++		reset_wdt();
++	} else {
++		printf("K1VEH: reset by PMIC P1\n");
++		ret = reset_p1();
++		if (ret) {
++			printf("K1VEH: PMIC write failed (%d), SoC WDT\n", ret);
++			reset_wdt();
++		}
++	}
++	mdelay(RESET_WAIT_MS);
++	printf("K1VEH: still running after the reset request\n");
++}
+diff --git a/board/spacemit/k1/vehicle_reset.h b/board/spacemit/k1/vehicle_reset.h
+new file mode 100644
+index 0000000..1d7bed3
+--- /dev/null
++++ b/board/spacemit/k1/vehicle_reset.h
+@@ -0,0 +1,8 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++/* Copyright (C) 2026 Thalles Campagnani */
++#ifndef __K1_VEHICLE_RESET_H
++#define __K1_VEHICLE_RESET_H
++
++void k1_vehicle_reset(void);
++
++#endif /* __K1_VEHICLE_RESET_H */
