@@ -52,15 +52,14 @@ RAM** (Samsung **K4UCE3Q4AA-MGCL** LPDDR4X, two ranks, x8 dies).
 ## Repository layout
 
 ```
-docs-cleanroom/          hardware specification (clean-room side)
-implementation/
-    src/                 DDR firmware source code (builds ddr_fw.bin)
-    docs/                documentation of the implementation
-    tools/               helper code that is not part of the firmware blob
+docsClean/               hardware specification (clean-room side, submodule)
+src/                     DDR firmware source code (builds ddr_fw.bin)
+docs/                    documentation of the implementation
+tools/                   helper code that is not part of the firmware blob
 LICENSE                  GNU GPL version 3
 ```
 
-### `docs-cleanroom/` — what the hardware does
+### `docsClean/` — what the hardware does
 
 The maximum amount of information gathered about how the K1 hardware works,
 consolidated in one place: system topology, MMIO map, clocks and PLLs, memory
@@ -69,27 +68,27 @@ hardware frequency-change (DFC) engine, the PI training engine, every training
 stage, the complete boot sequence, configuration variants, reference
 measurements and the FDL test platform. Each topic ends with a **Gaps**
 section listing what is still unknown. Start at
-[docs-cleanroom/README.md](docs-cleanroom/README.md).
+[docsClean/README.md](docsClean/README.md).
 
 This directory contains **hardware facts only**. It must not contain
 information about the implementation (its code, structure, timings or
 results), so that it stays a clean source for any implementation.
 
-### `implementation/src/` — the firmware
+### `src/` — the firmware
 
 The source code that trains the RAM, written from the information in
-`docs-cleanroom/`. It builds the raw image that mainline U-Boot loads as
+`docsClean/`. It builds the raw image that mainline U-Boot loads as
 `ddr_fw.bin`.
 
-### `implementation/docs/` — documentation of the implementation
+### `docs/` — documentation of the implementation
 
 How the implementation is organized and why. **New discoveries made while
 implementing must be written here**, in this separate documentation — not in
-`docs-cleanroom/`. This keeps the specification free of implementation details
+`docsClean/`. This keeps the specification free of implementation details
 and makes clear which knowledge came from the hardware analysis and which came
 from writing and testing the code.
 
-### `implementation/tools/` — helper code outside the blob
+### `tools/` — helper code outside the blob
 
 Any code created to help the implementation that is **not part of the
 firmware blob** goes here:
@@ -105,14 +104,14 @@ firmware blob** goes here:
 ### Information flow
 
 ```
-hardware ──(FDL experiments)──> docs-cleanroom ──> implementation/src
-                                                        │
-                    implementation/docs <── new findings ┘
-                    implementation/tools <── helper code
+hardware ──(FDL experiments)──> docsClean ──> src
+                                               │
+                        docs  <── new findings ┘
+                        tools <── helper code
 ```
 
 The flow is one-way: the implementation reads the specification; nothing from
-the implementation is copied back into `docs-cleanroom/`.
+the implementation is copied back into `docsClean/`.
 
 ## Building
 
@@ -121,23 +120,23 @@ for the tests also `riscv64-linux-gnu-gcc`, `qemu-riscv64`, a native `gcc` and
 Python 3.
 
 ```sh
-make -C implementation/src blob      # -> implementation/build/blob/k1_ddr_fw.bin
-make -C implementation/src host-test # tests natively, with ASan/UBSan
-make -C implementation/src test      # tests on rv64gc under qemu-riscv64
-make -C implementation/src host-test-exp   # injected error paths, against the model
-make -C implementation/src mutate    # mutation testing of the firmware sources
+make -C src blob      # -> build/blob/k1_ddr_fw.bin
+make -C src host-test # tests natively, with ASan/UBSan
+make -C src test      # tests on rv64gc under qemu-riscv64
+make -C src host-test-exp   # injected error paths, against the model
+make -C src mutate    # mutation testing of the firmware sources
 ```
 
 To use the firmware with mainline U-Boot, point the K1 build at it:
 
 ```sh
-export DDR_FW_FILE=$PWD/implementation/build/blob/k1_ddr_fw.bin
+export DDR_FW_FILE=$PWD/build/blob/k1_ddr_fw.bin
 make spacemit_k1_defconfig && make   # in the U-Boot tree -> u-boot-spl-ddr.bin
 ```
 
 The image is LPDDR4X with Tx ODT 80 Ω (the SPL's default memory type); the
 mainline ABI does not pass the memory type, so LPDDR4 boards need a separate
-build. Building signed images for FDL tests (`implementation/tools/vehicle/`)
+build. Building signed images for FDL tests (`tools/vehicle/`)
 additionally needs a mainline U-Boot checkout (`UBOOT=`) and the vendor U-Boot
 tree that holds the signing tool (`VENDOR_UBOOT=`), which is only executed.
 
@@ -150,7 +149,7 @@ tree that holds the signing tool (`VENDOR_UBOOT=`), which is only executed.
 - The PI training sequencer is used as a black box; its internal algorithm is
   unknown.
 
-See the Gaps sections in `docs-cleanroom/` for everything that is still open.
+See the Gaps sections in `docsClean/` for everything that is still open.
 
 ## License
 
@@ -164,7 +163,7 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE. See [LICENSE](LICENSE) for details.
 
 Each file carries an `SPDX-License-Identifier` line. The U-Boot patch in
-`implementation/tools/vehicle/u-boot/` is licensed GPL-2.0-or-later, like the
+`tools/vehicle/u-boot/` is licensed GPL-2.0-or-later, like the
 U-Boot code it modifies.
 
 This project is not affiliated with or endorsed by SpacemiT, Banana Pi or

@@ -23,7 +23,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]   # implementation/
+ROOT = Path(__file__).resolve().parents[2]   # repo root (src/, tools/ at top level)
 SRC = ROOT / "src"
 T, I, B, TB = (
     "lib/k1_ddrt.c",

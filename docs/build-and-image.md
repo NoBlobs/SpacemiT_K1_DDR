@@ -21,7 +21,7 @@ The code needs a compiler with C23 support (`-std=c23`: `constexpr`,
 
 ## Makefile targets
 
-Run from `implementation/src/` (or with `make -C implementation/src`):
+Run from `src/` (or with `make -C src`):
 
 | Target | What it does | Output |
 |---|---|---|
@@ -34,7 +34,7 @@ Run from `implementation/src/` (or with `make -C implementation/src`):
 | `all` | `blob` + `test` | |
 | `clean` | Removes `$(BUILD)/blob` and `$(BUILD)/test` | |
 
-Variables: `BUILD` (default `../build`, i.e. `implementation/build/`, ignored by
+Variables: `BUILD` (default `../build`, i.e. `build/`, ignored by
 git), `TOOLS` (default `../tools`; the test sources are in `$(TOOLS)/test`),
 `BLOB_DEFS` (extra flags for the image, used by the error-injection builds),
 `SPEC_DOCS` (directory of the specification in the format `check_tables.py`
@@ -165,8 +165,8 @@ files land next to the ELF).
 ## Using the image with mainline U-Boot
 
 ```sh
-make -C implementation/src blob
-export DDR_FW_FILE=$PWD/implementation/build/blob/k1_ddr_fw.bin
+make -C src blob
+export DDR_FW_FILE=$PWD/build/blob/k1_ddr_fw.bin
 # in the U-Boot tree:
 make spacemit_k1_defconfig && make      # -> u-boot-spl-ddr.bin
 ```

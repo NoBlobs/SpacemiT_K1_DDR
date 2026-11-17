@@ -160,10 +160,10 @@ first value printed may be 0. It only affects the printout.
 
 Comments in `src/` cite sections of the specification revision the code was
 written against, as `doc NN` (03–08, 20, 21, 25–31) and `P-NN` amendment
-numbers. That numbering does not correspond to `docs-cleanroom/`, whose files
+numbers. That numbering does not correspond to `docsClean/`, whose files
 are named by topic; the comments are kept as written. `check_tables.py` also
 parses that revision's reStructuredText source, not the Markdown of
-`docs-cleanroom/`.
+`docsClean/`.
 Porting the checker to the Markdown tables, and updating the comment
 references, would tie the code to the published specification.
 

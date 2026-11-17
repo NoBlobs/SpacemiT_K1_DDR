@@ -15,11 +15,11 @@ specification.
 ## Rules for this directory
 
 - **New discoveries made during implementation go here**, not in
-  [`../../docs-cleanroom/`](../../docs-cleanroom/). The clean-room
+  [`../docsClean/`](../docsClean/). The clean-room
   specification holds only hardware facts gathered by the analysis; anything
   learned while writing, running or debugging the code is recorded in this
   directory, so the two sources stay distinguishable.
-- Information flows one way: the implementation reads `docs-cleanroom/`;
+- Information flows one way: the implementation reads `docsClean/`;
   nothing from the implementation is copied back into it.
 - Helper code that is not part of the firmware blob belongs in
   [`../tools/`](../tools/), not in `../src/`.

@@ -215,7 +215,7 @@ specification source (reStructuredText simple tables and code blocks of the
 specification revision the code was written against, ignoring implementer
 notes), and reports facts present only in the code, only in the
 specification, or duplicated. `make check-tables` needs `SPEC_DOCS` pointing to
-that source; the parser does not read the Markdown in `docs-cleanroom/`.
+that source; the parser does not read the Markdown in `docsClean/`.
 
 ## Adding a test
 

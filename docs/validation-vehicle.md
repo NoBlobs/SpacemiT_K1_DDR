@@ -39,7 +39,7 @@ extract_log.py ──> one summary per log
 | `UBOOT` | Mainline U-Boot checkout (validated at commit `8d534cec0cc`). It is copied to `$WORK/u-boot` and the patch is applied to the copy (skipped if it is already applied); the checkout itself is not modified |
 | `VENDOR_UBOOT` | Vendor U-Boot tree holding the FSBL signing tool (`tools/build_binary_file.py`) and key configuration (`board/spacemit/k1-x/configs`). The tool is only executed, on a copy of its configuration |
 | `OPENSBI` | `MODE=uboot` only: `fw_dynamic.bin` built with `FW_TEXT_START=0x0` |
-| `DDR_FW` | `MODE=retrain` only: the proprietary `ddr_fw.bin` (default `implementation/build/vehicle/ddr_fw.bin`) |
+| `DDR_FW` | `MODE=retrain` only: the proprietary `ddr_fw.bin` (default `build/vehicle/ddr_fw.bin`) |
 | `WORK` | Scratch directory, default `~/k1-cleanroom-build`; must not contain spaces or colons (U-Boot's kbuild) |
 | `CROSS_COMPILE` | Default `riscv64-linux-gnu-` |
 
@@ -63,7 +63,7 @@ extract_log.py ──> one summary per log
 
 ### Steps
 
-1. `make -C implementation/src blob` (with `BLOB_DEFS=-D$EXP` when set).
+1. `make -C src blob` (with `BLOB_DEFS=-D$EXP` when set).
 2. Copy `$UBOOT` to `$WORK/u-boot` (rsync, without `.git`) and apply the
    patch.
 3. Copy the DDR firmware for the SPL slot to `$WORK/ddr_fw.bin` and the open
@@ -78,7 +78,7 @@ extract_log.py ──> one summary per log
    `K1_VEHICLE_LAT`.
 6. Sign `u-boot-spl-ddr.bin` with the vendor tool (its `fsbl.json` copied and
    edited to point at `u-boot-spl-ddr.bin`).
-7. Outputs land in `implementation/build/vehicle/`.
+7. Outputs land in `build/vehicle/`.
 
 ## The U-Boot patch
 
@@ -207,16 +207,16 @@ in [acceptance-and-logging.md](acceptance-and-logging.md).
 
 ```sh
 # full bring-up by the open firmware, 5 runs, PMIC reset between them
-MODE=full UBOOT=… VENDOR_UBOOT=… implementation/tools/vehicle/build-vehicle.sh
-python3 implementation/tools/vehicle/fdl_run.py \
-        implementation/build/vehicle/FSBL-gpl-full.bin --runs 5 --log logs/full.log
-python3 implementation/tools/vehicle/extract_log.py logs/full-*.log
+MODE=full UBOOT=… VENDOR_UBOOT=… tools/vehicle/build-vehicle.sh
+python3 tools/vehicle/fdl_run.py \
+        build/vehicle/FSBL-gpl-full.bin --runs 5 --log logs/full.log
+python3 tools/vehicle/extract_log.py logs/full-*.log
 
 # A/B: alternate two images
-python3 implementation/tools/vehicle/fdl_run.py A.bin B.bin --runs 8 --log logs/ab.log
+python3 tools/vehicle/fdl_run.py A.bin B.bin --runs 8 --log logs/ab.log
 
 # error path on hardware
-MODE=full EXP=K1_EXP_DFC_TIMEOUT UBOOT=… VENDOR_UBOOT=… implementation/tools/vehicle/build-vehicle.sh
+MODE=full EXP=K1_EXP_DFC_TIMEOUT UBOOT=… VENDOR_UBOOT=… tools/vehicle/build-vehicle.sh
 ```
 
 ---
