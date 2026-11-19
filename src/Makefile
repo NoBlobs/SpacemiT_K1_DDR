@@ -18,7 +18,8 @@ CROSS_ELF ?= riscv64-elf-
 CROSS_LNX ?= riscv64-linux-gnu-
 QEMU      ?= qemu-riscv64
 HOSTCC    ?= gcc
-BLOB_DEFS ?=
+# Independent eye is the production data-eye path (PI: bring-up + DQS gate).
+BLOB_DEFS ?= -DK1_INDEP_EYE
 
 STD  := -std=c23
 ARCH := -march=rv64gc -mabi=lp64d -mcmodel=medany
@@ -27,11 +28,11 @@ WARN := -Wall -Wextra -Werror -Wshadow -Wundef -Wstrict-prototypes \
 INC  := -Iinclude -Ilib
 
 LIB_SRC  := lib/k1_ddrt.c lib/k1_ddr_boot.c lib/k1_ddr_init.c \
-	lib/k1_ddr_tables.c lib/k1_ddr_accept.c
+	lib/k1_ddr_tables.c lib/k1_ddr_accept.c lib/k1_ddr_eye.c
 BLOB_SRC := blob/start.S blob/blob.c blob/fmt.c
 TEST_DIR := $(TOOLS)/test
 TEST_SRC := $(TEST_DIR)/model.c $(TEST_DIR)/test_main.c $(TEST_DIR)/test_boot.c \
-	$(TEST_DIR)/test_accept.c
+	$(TEST_DIR)/test_accept.c $(TEST_DIR)/test_eye.c
 HDRS     := $(wildcard include/*.h lib/*.h blob/*.h $(TEST_DIR)/*.h)
 
 BLOB_CFLAGS := $(STD) $(ARCH) $(WARN) $(INC) -Os -ffreestanding \

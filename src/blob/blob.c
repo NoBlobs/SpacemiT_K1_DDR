@@ -12,6 +12,7 @@
 #include "k1_ddr_accept.h"
 #include "k1_ddr_boot.h"
 #include "k1_ddrt.h"
+#include "../lib/k1_ddr_eye.h"
 #include "../lib/k1_ddrt_io.h"
 #include "../lib/k1_ddrt_regs.h"
 
@@ -63,6 +64,7 @@ static void out(const struct k1_ddrt_env *env, const char *fmt, ...)
 
 struct boot_obs {
 	const struct k1_ddrt_env *env;
+	uintptr_t ddr;
 	uint32_t cs_num;
 	uint32_t data_rate;
 	uint32_t n;
@@ -88,6 +90,13 @@ static void boot_on_pass(void *ctx, const struct k1_ddrt_result *r, uint32_t pp)
 		if (o->data_rate == 2400)
 			o->bad += k1_ddr_accept_pp2_2400(env, r);
 	}
+#ifdef K1_INDEP_EYE
+	/* Production data-eye: PI leave-up only. Pass 0 is before the
+	 * address map. The final fp is re-centred after the last DFC. */
+	if (!r->rc && o->n >= 1 &&
+	    pp != k1_ddr_final_fp(K1_DDR_LPDDR4X, o->data_rate))
+		k1_ddr_eye_measure(o->ddr, o->cs_num, pp, env);
+#endif
 	o->n++;
 }
 
@@ -100,7 +109,12 @@ int k1_blob_ddr_init(uint64_t ddr_base, uint32_t cs_num, uint32_t data_rate,
 		.vlog = blob_vlog,
 		.ctx = &c,
 	};
-	struct boot_obs obs = { .env = &env, .cs_num = cs_num, .data_rate = data_rate };
+	struct boot_obs obs = {
+		.env = &env,
+		.ddr = (uintptr_t)ddr_base,
+		.cs_num = cs_num,
+		.data_rate = data_rate,
+	};
 	/* P-22: no silicon selector; drop-in is LPDDR4X / Tx ODT 80 ohm */
 	const struct k1_ddr_boot_cfg cfg = {
 		.ddr = (uintptr_t)ddr_base,
@@ -122,6 +136,10 @@ int k1_blob_ddr_init(uint64_t ddr_base, uint32_t cs_num, uint32_t data_rate,
 		const struct k1_ddrt_cfg mc = { .ddr = cfg.ddr, .cs_num = cs_num };
 
 		k1_ddr_print_mrs(&env, &mc);
+#ifdef K1_INDEP_EYE
+		/* final DFC re-sends MR14 from the bank; re-centre at the live fp */
+		k1_ddr_eye_measure(cfg.ddr, cs_num, rep.final_pp, &env);
+#endif
 	}
 	out(&env, "k1-ddr: rc %d (%s) in %u us: %u passes, MR5 0x%02x MR8 0x%02x%s, %u MB, fp%u ctl_freq 0x%08x status 0x%02x clksel 0x%08x, %u item(s) out of range\n",
 	    rc, k1_ddr_step_name(rep.fail_step), rep.total_us, rep.n_pass,

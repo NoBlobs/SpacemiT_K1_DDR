@@ -1,0 +1,5 @@
+u-boot: v2027.01-rc1-341-g934995f642a (934995f642a)
+tree:   /home/thalles/0-git/NoBlobs/u-boot
+config: spacemit_k1_defconfig + CONFIG_PYLIBFDT= + DTC=/usr/bin/dtc + BINMAN_ALLOW_MISSING=1
+spl.c:  one-line change so ddr_init always receives puts (eye output on UART)
+rsa-sign.c: ENGINE link stubs for OpenSSL 4 host build

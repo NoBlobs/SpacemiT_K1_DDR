@@ -146,4 +146,8 @@ uint8_t model_default_rx_margin(const struct model *m, uint32_t step,
 uint8_t model_default_tx_margin(const struct model *m, uint32_t step,
 				uint32_t cs, uint32_t dq);
 
+/* Independent eye: PI seeds inside a delay window that widens at the Vref peak. */
+void model_seed_indep_eye(uint32_t fp);
+bool k1_mock_eye_fail(uint32_t fp);
+
 #endif /* K1_TEST_MODEL_H */

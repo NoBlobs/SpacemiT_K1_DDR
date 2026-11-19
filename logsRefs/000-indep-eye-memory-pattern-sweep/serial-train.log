@@ -1,0 +1,194 @@
+
+fastboot_handle_command: 00023700
+Starting download of 145152 bytes
+usb_tx_bytes : len= 65 pBuf= 0xc083fe88 
+usb_rx_bytes : len= 145152 pBuf= 0xc0800000
+usb_tx_bytes : len= 65 pBuf= 0xc083fe88 
+usb_rx_bytes : len= 4096 pBuf= 0xc0838720
+fastboot_handle_command: continue
+usb_tx_bytes : len= 65 pBuf= 0xc083fe88 
+j...
+
+<debug_uart>
+
+U-Boot SPL 2027.01-rc1 (Nov 18 2026 - 20:08:33 -0300)
+Fail to detect board:-2
+vdd_core, value:900000
+vdd_1v8, value:1800000
+vdd_1v8_mmc, value:1800000
+DDR firmware: [0xc081e280]:0x1800006f, size:0x5378
+k1-ddr: open firmware, ddr 0xc0000000 cs_num 2, 2400 MT/s
+k1-ddr: LPDDR4X, cs_num 2, 2400 MT/s, final fp2
+k1-ddr: pmu before: cc_ap 0x00019249 hw_slp 0xa0610c00 clksel 0x00073340 pll1 0x2a200000 0x50dd6432 mck 0x40001000
+k1-ddr: PLL locked, fp0 up: clksel 0x00033b50 hw_slp 0x40600400 mck 0x40001003
+k1-ddr: pll1 0x2a203b00 0x50dd6432
+k1-ddr: device init: status 0x33 ctl_freq 0x00800400 pi_cfg 0x0 phy_init 0x100 pi_status 0x80008000 common 0x36e4d800
+k1-ddrt: pass pp0 cs_num 2
+k1-ddrt: pp0 ok: rx vref idx 6 (min 24), tx mr14 26 (min 20)
+k1-ddr: pass 0 pp0 rc 0 stage none cs 0: rx idx 6, mr14 26, phy_status 0x0, 8626 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 49
+  pi gate ops 2 stale-first 0 max-polls 8 max-us 40 stage-us 117
+  pi rx   ops 34 stale-first 0 max-polls 2 max-us 18 stage-us 4087
+  pi tx   ops 34 stale-first 0 max-polls 4 max-us 25 stage-us 4373
+  rx min cs1 21 22 22 22 23 23 24 24 23 23 23 22 21 18 17 16
+  tx min cs1 18 18 18 18 18 20 19 20 20 20 20 20 20 20 20 20
+  rx min cs2 22 22 23 23 23 24 24 24 24 23 23 22 21 18 17 16
+  tx min cs2 19 19 19 19 20 20 20 20 20 20 20 20 20 20 20 21
+  state: vref0 0x6666a937 vref1 0x6666a927 txvref 0x9d1a4314 (mr14 field 26) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     18  20  17  21   gate 0x00017374 0x00017172 0x00017374 0x00017170
+    rx dq0   b0:18 b1:18 b2:19 b3:18
+    tx dq0   b0:31 b1:33 b2:31 b3:33
+    tx dm    b0:32 b1:33 b2:31 b3:34
+   cs1 wl     17  20  17  21   gate 0x00017473 0x00017271 0x00017475 0x00017271
+    rx dq0   b0:19 b1:19 b2:19 b3:18
+    tx dq0   b0:30 b1:33 b2:31 b3:33
+    tx dm    b0:31 b1:33 b2:31 b3:34
+k1-ddr: MR5 0x01 MR8 0x52
+k1-ddr: device init x8: status 0x33 ctl_freq 0x00800400 pi_cfg 0x0 phy_init 0x100 pi_status 0x80008000 common 0x36e4d800
+k1-ddr: 8192 MB (x8, ROW_17), cs0 0x00100001 cs1 0x00100001 0x1 geom 0x05030732
+k1-ddr: DFC window ctl0 0x00040300, ddr ctl0 0x00040300 (alias)
+k1-ddr: DFC table loaded: snapshot 0x200..0x28a
+k1-ddrt: pass pp0 cs_num 2
+k1-ddrt: pp0 ok: rx vref idx 5 (min 24), tx mr14 36 (min 21)
+k1-ddr: pass 1 pp0 rc 0 stage none cs 0: rx idx 5, mr14 36, phy_status 0x0, 8582 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 49
+  pi gate ops 2 stale-first 0 max-polls 3 max-us 20 stage-us 77
+  pi rx   ops 34 stale-first 0 max-polls 2 max-us 18 stage-us 4084
+  pi tx   ops 34 stale-first 0 max-polls 4 max-us 26 stage-us 4372
+  rx min cs1 21 22 23 23 24 24 24 24 23 23 23 22 21 18 17 16
+  tx min cs1 18 18 18 19 18 20 20 20 20 20 20 20 20 20 21 21
+  rx min cs2 21 21 22 22 23 24 24 24 23 23 23 22 21 18 16 15
+  tx min cs2 19 19 19 19 20 20 20 20 20 20 20 20 20 21 20 21
+  state: vref0 0x5555a937 vref1 0x5555a927 txvref 0x9d244314 (mr14 field 36) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     18  20  17  21   gate 0x00012423 0x00012221 0x00012425 0x00012021
+    rx dq0   b0:18 b1:18 b2:19 b3:17
+    tx dq0   b0:32 b1:33 b2:31 b3:34
+    tx dm    b0:31 b1:33 b2:31 b3:34
+   cs1 wl     17  20  17  21   gate 0x00012324 0x00012322 0x00012526 0x00012122
+    rx dq0   b0:19 b1:18 b2:19 b3:18
+    tx dq0   b0:31 b1:33 b2:31 b3:34
+    tx dm    b0:31 b1:33 b2:31 b3:35
+k1-ddr: DFC fp1 in 28 us: ctl_freq 0x50800400 pi_cfg 0x4 status 0x33 clksel 0x00033b04
+k1-ddrt: pass pp1 cs_num 2
+k1-ddrt: pp1 ok: rx vref idx 3 (min 26), tx mr14 34 (min 24)
+k1-ddr: pass 2 pp1 rc 0 stage none cs 0: rx idx 3, mr14 34, phy_status 0x0, 8717 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 14 stage-us 48
+  pi gate ops 2 stale-first 0 max-polls 3 max-us 20 stage-us 78
+  pi rx   ops 34 stale-first 0 max-polls 2 max-us 18 stage-us 4087
+  pi tx   ops 34 stale-first 0 max-polls 5 max-us 29 stage-us 4504
+  rx min cs1 24 25 25 26 26 26 26 25 25 24 23 23 23 19 18 17
+  tx min cs1 22 22 22 22 22 23 23 23 23 23 24 24 24 24 24 24
+  rx min cs2 24 25 25 26 26 26 26 25 24 24 24 23 22 19 18 17
+  tx min cs2 22 23 22 23 23 23 23 23 23 23 23 23 23 24 24 25
+  state: vref0 0x3333a937 vref1 0x3333a927 txvref 0x9d224314 (mr14 field 34) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     18  20  17  22   gate 0x00012423 0x00012223 0x00012425 0x00012021
+    rx dq0   b0:18 b1:18 b2:18 b3:17
+    tx dq0   b0:31 b1:33 b2:31 b3:35
+    tx dm    b0:32 b1:34 b2:31 b3:35
+   cs1 wl     17  20  18  21   gate 0x00012324 0x00012122 0x00012526 0x00012122
+    rx dq0   b0:18 b1:18 b2:18 b3:17
+    tx dq0   b0:31 b1:33 b2:32 b3:34
+    tx dm    b0:31 b1:34 b2:32 b3:34
+k1-ddr: DFC fp2 in 28 us: ctl_freq 0xa0800400 pi_cfg 0x8 status 0x33 clksel 0x00033b40
+k1-ddrt: pass pp2 cs_num 2
+k1-ddrt: pp2 ok: rx vref idx 6 (min 10), tx mr14 31 (min 10)
+k1-ddr: pass 3 pp2 rc 0 stage none cs 0: rx idx 6, mr14 31, phy_status 0x0, 8168 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 48
+  pi gate ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 61
+  pi rx   ops 34 stale-first 0 max-polls 1 max-us 14 stage-us 3953
+  pi tx   ops 34 stale-first 0 max-polls 2 max-us 18 stage-us 4106
+  rx min cs1  7  8  8  9  9 10 10 10  9  9  8  8  7  0  0  0
+  tx min cs1  9  9  9  9  9  9  9 10 10 10 10 10 10 10 10 10
+  rx min cs2  7  7  8  8  9  9 10 10  9  8  8  7  6  0  0  0
+  tx min cs2  9  9  9  9  9  9  9  9  9  9 10 10 10 10 10 10
+  state: vref0 0x6666a937 vref1 0x6666a927 txvref 0x9d1f4314 (mr14 field 31) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     19  22  20  23   gate 0x00012625 0x00012425 0x00012627 0x00012223
+    rx dq0   b0:18 b1:18 b2:18 b3:18
+    tx dq0   b0:32 b1:35 b2:33 b3:36
+    tx dm    b0:32 b1:35 b2:34 b3:36
+   cs1 wl     19  21  20  22   gate 0x00012526 0x00012324 0x00012728 0x00012324
+    rx dq0   b0:19 b1:19 b2:18 b3:18
+    tx dq0   b0:33 b1:34 b2:34 b3:35
+    tx dm    b0:32 b1:34 b2:34 b3:35
+k1-ddr: DFC fp2 in 25 us: ctl_freq 0xa0800400 pi_cfg 0x8 status 0x33 clksel 0x00033b40
+  cs0 ch0 MR5:0x01 MR6:0x08 MR8:0x52 MR12:0x5d MR14:0x1f
+  cs0 ch1 MR5:0x01 MR6:0x08 MR8:0x52 MR12:0x5d MR14:0x1f
+  cs1 ch0 MR5:0x01 MR6:0x08 MR8:0x52 MR12:0x5d MR14:0x1f
+  cs1 ch1 MR5:0x01 MR6:0x08 MR8:0x52 MR12:0x5d MR14:0x1f
+indep: eye training at fp2, buf 0x8000000 (CS0)
+indep: fp2 rx b0 centre 18 18 18 17 19 18 19 19
+indep: fp2 rx b0 width  9 10 10 9 9 9 10 10
+indep: fp2 rx b1 centre 19 19 19 19 19 18 19 19
+indep: fp2 rx b1 width  10 10 10 10 10 9 10 10
+indep: fp2 rx b2 centre 18 18 18 18 19 19 19 19
+indep: fp2 rx b2 width  9 9 9 9 10 10 10 10
+indep: fp2 rx b3 centre 18 18 18 18 19 18 18 19
+indep: fp2 rx b3 width  10 11 11 11 10 10 11 10
+indep: fp2 tx b0 centre 33 33 33 33 34 34 34 34
+indep: fp2 tx b0 width  11 11 13 12 12 12 12 12
+indep: fp2 tx b1 centre 36 37 37 36 37 36 36 37
+indep: fp2 tx b1 width  11 12 12 11 12 12 13 12
+indep: fp2 tx b2 centre 34 34 34 34 34 34 34 34
+indep: fp2 tx b2 width  10 11 11 11 11 11 11 11
+indep: fp2 tx b3 centre 37 37 37 37 37 36 37 37
+indep: fp2 tx b3 width  10 10 11 11 11 11 12 12
+indep: eye training done in 35703246 us, verify OK (0/3 patterns bad)
+k1-ddr: rc 0 (none) in 561481 us: 4 passes, MR5 0x01 MR8 0x52 x8, 8192 MB, fp2 ctl_freq 0xa0800400 status 0x33 clksel 0x00033b40, 0 item(s) out of range
+DDR is ready
+jedec_spi_nor flash@0: unrecognized JEDEC id bytes: 00, 00, 00
+Fail to detect spi nor flash.
+SPL: Unsupported Boot Device!
+Trying to boot from MMC1
+[  56.225] 
+
+U-Boot 2022.10spacemit-gd577d835b-dirty (Sep 01 2025 - 17:11:06 +0000), Build: jenkins-BSP-build-deb-767
+
+[  56.235] CPU:   rv64imafdcv
+[  56.237] Model: spacemit k1-x deb1 board
+[  56.240] DRAM:  DDR size = 4096 MB
+[  56.244] 4 GiB
+[  75.480] reset driver probe start 
+[  75.927] reset driver probe finish 
+[  79.961] Core:  409 devices, 29 uclasses, devicetree: board
+[  79.980] WDT:   Started PMIC_WDT with servicing (60s timeout)
+[  80.619] WDT:   Started watchdog@D4080000 with servicing (60s timeout)
+[  80.631] MMC:   sdh@d4280000: probe done.
+[  82.697] sdh@d4281000: probe done.
+[  82.698] sdh@d4280000: 0, sdh@d4281000: 2
+[  82.831] Loading Environment from nowhere... OK
+[  83.887] Cannot support showing bootlogo in this boot mode!
+[  83.890] Unsupported boot mode for splash screen
+[  83.894] initialize_console_log_buffer
+[  83.898] Have allocated memory for console log buffer
+[  83.904] In:    serial
+[  83.905] Out:   serial
+[  83.907] Err:   serial
+[  84.318] Default to 100kHz
+[  84.477] Found 2 valid MAC addresses.
+[  84.478] Serial number is valid.
+[  84.481] TLV item: serial# = ef5c9457f4f5
+[  86.240] Found device 'hdmi@c0400500', disp_uc_priv=000000007dea78c0
+[  88.461] HDMI cannot get HPD signal
+[  88.461] spacemit_display_init: device 'dpu@c0340000' display won't probe (ret=-1)
+[  92.402] HDMI cannot get HPD signal
+[  92.402] display devices not found or not probed yet: -1
+[  92.408] All buttons probed successfully
+[  92.413] k1xci_udc: phy_init 
+[  92.745] k1xci_udc probe
+[  93.067] k1xci_udc: pullup 1 
+[  93.395] -- suspend --
+[  99.161] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x0 value 0x100 length 0x40
+[  99.622] handle setup SET_ADDRESS, 0x0, 0x5 index 0x0 value 0x24 length 0x0
+[  99.985] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x0 value 0x100 length 0x12
+[ 100.335] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x0 value 0x200 length 0x9
+[ 100.684] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x0 value 0x200 length 0x20
+[ 101.040] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x0 value 0x300 length 0xff
+[ 101.389] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x409 value 0x302 length 0xff
+[ 101.740] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x409 value 0x301 length 0xff
+[ 102.098] handle setup SET_CONFIGURATION, 0x0, 0x9 index 0x0 value 0x1 length 0x0
+[ 102.448] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x409 value 0x302 length 0xff
+[ 102.799] handle setup GET_DESCRIPTOR, 0x80, 0x6 index 0x409 value 0x303 length 0xff

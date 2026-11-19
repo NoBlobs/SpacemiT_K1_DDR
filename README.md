@@ -142,12 +142,17 @@ tree that holds the signing tool (`VENDOR_UBOOT=`), which is only executed.
 
 ## Status
 
-- Reference board (BPI-F3, 8 GB LPDDR4X, 2 ranks, x8): the complete sequence is
-  characterized at 2400 MT/s and at 2666 MT/s, the SoC maximum.
-- 1-rank / x16 (4 GB), 16 GB and LPDDR4 (non-X) configurations are described
-  from encodings and command formats but have not been measured on hardware.
+- Reference board (BPI-F3, 8 GiB Samsung LPDDR4X, 2 ranks, x8): the complete
+  sequence is characterized at 2400 MT/s and at 2666 MT/s, the SoC maximum.
+- 16 GiB Micron BPI-F3 (`MT53E4G32D8`, 2 ranks): independent write leveling,
+  RX/TX Vref and delay training is measured on both ranks at every frequency
+  point (verify OK; two-stage search about 3.2 s). The DQS read-gate stays
+  with the PI.
+- 1-rank / x16 (4 GiB) and LPDDR4 (non-X) configurations are described from
+  encodings and command formats but have not been measured on hardware.
 - The PI training sequencer is used as a black box; its internal algorithm is
-  unknown.
+  unknown. The host tests drive the same independent-eye path against a
+  geometric DRAM model.
 
 See the Gaps sections in `docsClean/` for everything that is still open.
 

@@ -1,0 +1,278 @@
+fastboot_handle_command: 00023ee0
+Starting download of 147168 bytes
+usb_tx_bytes : len= 65 pBuf= 0xc083fe88 
+usb_rx_bytes : len= 147168 pBuf= 0xc0800000
+usb_tx_bytes : len= 65 pBuf= 0xc083fe88 
+usb_rx_bytes : len= 4096 pBuf= 0xc0838720
+fastboot_handle_command: continue
+usb_tx_bytes : len= 65 pBuf= 0xc083fe88 
+j...
+
+<debug_uart>
+
+U-Boot SPL 2027.01-rc1 (Nov 19 2026 - 09:16:59 -0300)
+Fail to detect board:-2
+vdd_core, value:900000
+vdd_1v8, value:1800000
+vdd_1v8_mmc, value:1800000
+DDR firmware: [0xc081e280]:0x1a80006f, size:0x5b50
+k1-ddr: open firmware, ddr 0xc0000000 cs_num 2, 2400 MT/s
+k1-ddr: LPDDR4X, cs_num 2, 2400 MT/s, final fp2
+k1-ddr: pmu before: cc_ap 0x00019249 hw_slp 0xa0610c00 clksel 0x00073340 pll1 0x2a200000 0x50dd6432 mck 0x40001000
+k1-ddr: PLL locked, fp0 up: clksel 0x00033b50 hw_slp 0x40600400 mck 0x40001003
+k1-ddr: pll1 0x2a203b00 0x50dd6432
+k1-ddr: device init: status 0x33 ctl_freq 0x00800400 pi_cfg 0x0 phy_init 0x100 pi_status 0x80008000 common 0x36e4d800
+k1-ddrt: pass pp0 cs_num 2
+k1-ddrt: pp0 ok: rx vref idx 5 (min 24), tx mr14 22 (min 23)
+k1-ddr: pass 0 pp0 rc 0 stage none cs 0: rx idx 5, mr14 22, phy_status 0x0, 9080 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 46
+  pi gate ops 2 stale-first 0 max-polls 7 max-us 36 stage-us 110
+  pi rx   ops 34 stale-first 0 max-polls 2 max-us 17 stage-us 4344
+  pi tx   ops 34 stale-first 0 max-polls 4 max-us 25 stage-us 4580
+  rx min cs1 22 23 23 24 24 25 24 24 24 24 23 22 21 17 16 14
+  tx min cs1 22 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23
+  rx min cs2 22 22 23 23 23 24 25 24 23 23 22 22 21 17 16 15
+  tx min cs2 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23
+  state: vref0 0x5555a937 vref1 0x5555a927 txvref 0x9d164314 (mr14 field 22) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     19  22  18  22   gate 0x0001706f 0x00016e6d 0x00017273 0x00016e6f
+    rx dq0   b0:18 b1:18 b2:18 b3:17
+    tx dq0   b0:33 b1:35 b2:32 b3:35
+    tx dm    b0:33 b1:36 b2:32 b3:36
+   cs1 wl     19  22  18  22   gate 0x00017271 0x00016e6d 0x00017273 0x00016e6f
+    rx dq0   b0:18 b1:18 b2:18 b3:17
+    tx dq0   b0:33 b1:36 b2:32 b3:35
+    tx dm    b0:33 b1:36 b2:32 b3:36
+k1-ddr: MR5 0xff MR8 0x58
+k1-ddr: device init x8: status 0x33 ctl_freq 0x00800400 pi_cfg 0x0 phy_init 0x100 pi_status 0x80008000 common 0x36e4d800
+k1-ddr: 16384 MB (x8, ROW_18), cs0 0x00110001 cs1 0x00110001 0x2 geom 0x05030832
+k1-ddr: DFC window ctl0 0x00040300, ddr ctl0 0x00040300 (alias)
+k1-ddr: DFC table loaded: snapshot 0x200..0x28a, MR21
+k1-ddrt: pass pp0 cs_num 2
+k1-ddrt: pp0 ok: rx vref idx 4 (min 24), tx mr14 21 (min 23)
+k1-ddr: pass 1 pp0 rc 0 stage none cs 0: rx idx 4, mr14 21, phy_status 0x0, 9028 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 46
+  pi gate ops 2 stale-first 0 max-polls 2 max-us 16 stage-us 71
+  pi rx   ops 34 stale-first 0 max-polls 2 max-us 17 stage-us 4332
+  pi tx   ops 34 stale-first 0 max-polls 4 max-us 25 stage-us 4579
+  rx min cs1 22 23 23 24 24 24 24 24 23 23 22 21 20 16 14 13
+  tx min cs1 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23
+  rx min cs2 21 22 23 23 24 25 24 24 23 23 22 21 20 16 15 13
+  tx min cs2 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23 23
+  state: vref0 0x4444a937 vref1 0x4444a927 txvref 0x9d154314 (mr14 field 21) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     19  22  18  22   gate 0x00011f20 0x00011d1e 0x00012122 0x00011d1e
+    rx dq0   b0:18 b1:17 b2:18 b3:17
+    tx dq0   b0:33 b1:35 b2:32 b3:35
+    tx dm    b0:33 b1:36 b2:32 b3:36
+   cs1 wl     19  22  18  22   gate 0x00012122 0x00011d1e 0x00012122 0x00011d1e
+    rx dq0   b0:18 b1:17 b2:18 b3:17
+    tx dq0   b0:33 b1:35 b2:32 b3:35
+    tx dm    b0:34 b1:36 b2:32 b3:36
+  second pp0: cs0 b0 gate 0x00011f20 not ~32..40
+  second pp0: cs0 b1 gate 0x00011d1e not ~32..40
+  second pp0: cs0 b3 gate 0x00011d1e not ~32..40
+  second pp0: cs1 b1 gate 0x00011d1e not ~32..40
+  second pp0: cs1 b3 gate 0x00011d1e not ~32..40
+indep: eye training at fp0, 2 rank(s)
+indep: fp0 cs0 wl centre 19 21 18 21 width 24 21 23 21
+indep: fp0 cs1 wl centre 19 21 18 21 width 24 21 23 21
+indep: fp0 rx vref A best 4 (min window 24) widths 22 22 23 23 24 24 24 24 24 23 23 22 21 17 16 14
+indep: fp0 rx vref B best 4 (min window 24) widths 21 22 22 23 24 24 24 23 23 22 21 21 20 16 13 0
+indep: fp0 tx mr14 best 21 (min window 24) widths 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24
+indep: fp0 cs0 buf 0x8000000
+indep: fp0 cs0 rx b0 centre 18 18 18 17 18 18 18 18
+indep: fp0 cs0 rx b0 width  24 24 24 24 23 23 23 25
+indep: fp0 cs0 rx b1 centre 17 18 17 18 18 18 18 18
+indep: fp0 cs0 rx b1 width  23 24 23 24 24 24 24 24
+indep: fp0 cs0 rx b2 centre 18 18 18 18 19 19 19 19
+indep: fp0 cs0 rx b2 width  23 23 22 24 24 24 24 24
+indep: fp0 cs0 rx b3 centre 17 17 17 17 18 17 17 17
+indep: fp0 cs0 rx b3 width  24 23 23 23 24 23 23 23
+indep: fp0 cs0 tx b0 centre 34 34 34 33 35 35 34 34
+indep: fp0 cs0 tx b0 width  27 27 24 25 24 24 25 25
+indep: fp0 cs0 tx b1 centre 35 35 36 36 36 35 36 36
+indep: fp0 cs0 tx b1 width  25 25 24 24 24 24 24 24
+indep: fp0 cs0 tx b2 centre 33 33 33 32 33 33 33 33
+indep: fp0 cs0 tx b2 width  26 25 24 25 24 24 24 25
+indep: fp0 cs0 tx b3 centre 35 35 35 35 36 35 35 36
+indep: fp0 cs0 tx b3 width  25 25 25 25 24 25 25 24
+indep: fp0 cs0 verify OK (0/3 patterns bad)
+indep: fp0 cs1 buf 0x288000000
+indep: fp0 cs1 rx b0 centre 18 18 18 17 18 19 18 19
+indep: fp0 cs1 rx b0 width  24 24 23 23 23 24 23 24
+indep: fp0 cs1 rx b1 centre 18 18 17 18 18 17 18 18
+indep: fp0 cs1 rx b1 width  24 24 23 24 24 23 23 24
+indep: fp0 cs1 rx b2 centre 19 18 18 18 19 19 19 19
+indep: fp0 cs1 rx b2 width  24 23 23 24 24 24 24 24
+indep: fp0 cs1 rx b3 centre 17 17 18 17 18 17 17 18
+indep: fp0 cs1 rx b3 width  24 23 24 23 24 24 23 24
+indep: fp0 cs1 tx b0 centre 34 34 34 33 34 35 34 34
+indep: fp0 cs1 tx b0 width  27 27 24 25 25 24 25 25
+indep: fp0 cs1 tx b1 centre 35 35 36 36 36 35 36 36
+indep: fp0 cs1 tx b1 width  25 25 24 24 24 24 24 24
+indep: fp0 cs1 tx b2 centre 32 33 33 32 33 33 33 33
+indep: fp0 cs1 tx b2 width  25 25 24 25 24 24 24 24
+indep: fp0 cs1 tx b3 centre 35 35 36 35 36 35 35 36
+indep: fp0 cs1 tx b3 width  25 25 24 25 24 25 25 24
+indep: fp0 cs1 verify OK (0/3 patterns bad)
+indep: eye training done in 29378017 us, verify OK (0 rank-fails), MR14 check rc 0
+k1-ddr: DFC fp1 in 25 us: ctl_freq 0x50800400 pi_cfg 0x4 status 0x33 clksel 0x00033b04
+k1-ddrt: pass pp1 cs_num 2
+k1-ddrt: pp1 ok: rx vref idx 3 (min 27), tx mr14 27 (min 27)
+k1-ddr: pass 2 pp1 rc 0 stage none cs 0: rx idx 3, mr14 27, phy_status 0x0, 9037 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 46
+  pi gate ops 2 stale-first 0 max-polls 2 max-us 16 stage-us 71
+  pi rx   ops 34 stale-first 0 max-polls 2 max-us 17 stage-us 4341
+  pi tx   ops 34 stale-first 0 max-polls 4 max-us 25 stage-us 4579
+  rx min cs1 25 26 26 27 27 27 26 26 25 24 24 23 22 18 16 15
+  tx min cs1 26 26 26 26 26 26 27 27 27 27 27 27 27 27 27 27
+  rx min cs2 25 26 26 27 27 27 26 25 25 24 24 23 22 18 16 15
+  tx min cs2 25 26 26 26 26 26 27 27 27 27 27 27 27 27 26 26
+  state: vref0 0x3333a937 vref1 0x3333a927 txvref 0x9d1b4314 (mr14 field 27) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     19  23  19  22   gate 0x00011f20 0x00011d1e 0x00012122 0x00011d1e
+    rx dq0   b0:17 b1:17 b2:18 b3:17
+    tx dq0   b0:33 b1:37 b2:33 b3:35
+    tx dm    b0:34 b1:37 b2:33 b3:36
+   cs1 wl     19  22  19  22   gate 0x00012122 0x00011f1e 0x00012122 0x00011d1e
+    rx dq0   b0:18 b1:17 b2:18 b3:17
+    tx dq0   b0:33 b1:36 b2:33 b3:35
+    tx dm    b0:34 b1:36 b2:33 b3:36
+indep: eye training at fp1, 2 rank(s)
+indep: fp1 cs0 wl centre 19 21 19 20 width 26 22 26 23
+indep: fp1 cs1 wl centre 19 20 19 20 width 26 23 25 23
+indep: fp1 rx vref A best 3 (min window 27) widths 25 26 26 27 27 27 27 26 26 25 25 24 23 19 18 17
+indep: fp1 rx vref B best 4 (min window 27) widths 24 25 25 26 27 27 26 25 25 24 24 23 22 17 16 14
+indep: fp1 tx mr14 best 22 (min window 26) widths 25 26 26 26 26 26 26 26 26 26 26 26 26 26 26 26
+indep: fp1 cs0 buf 0x8000000
+indep: fp1 cs0 rx b0 centre 17 17 17 17 18 18 18 18
+indep: fp1 cs0 rx b0 width  27 27 27 26 26 27 26 27
+indep: fp1 cs0 rx b1 centre 17 18 17 17 18 17 18 18
+indep: fp1 cs0 rx b1 width  27 26 27 27 26 27 26 26
+indep: fp1 cs0 rx b2 centre 18 18 18 18 18 19 19 19
+indep: fp1 cs0 rx b2 width  27 27 26 27 27 26 26 26
+indep: fp1 cs0 rx b3 centre 17 17 17 17 18 17 18 17
+indep: fp1 cs0 rx b3 width  27 27 27 27 27 27 26 27
+indep: fp1 cs0 tx b0 centre 34 34 34 34 34 34 34 34
+indep: fp1 cs0 tx b0 width  28 28 28 28 27 27 27 28
+indep: fp1 cs0 tx b1 centre 34 34 35 35 35 35 35 35
+indep: fp1 cs0 tx b1 width  27 27 26 25 25 26 26 26
+indep: fp1 cs0 tx b2 centre 34 34 34 33 34 34 34 34
+indep: fp1 cs0 tx b2 width  28 28 28 27 27 28 28 27
+indep: fp1 cs0 tx b3 centre 34 34 34 34 34 34 34 34
+indep: fp1 cs0 tx b3 width  27 28 27 27 27 28 27 27
+indep: fp1 cs0 verify OK (0/3 patterns bad)
+indep: fp1 cs1 buf 0x288000000
+indep: fp1 cs1 rx b0 centre 18 18 18 17 18 18 18 18
+indep: fp1 cs1 rx b0 width  26 26 26 26 27 27 27 27
+indep: fp1 cs1 rx b1 centre 17 17 17 17 18 17 18 17
+indep: fp1 cs1 rx b1 width  27 27 27 27 26 27 26 27
+indep: fp1 cs1 rx b2 centre 18 18 18 18 19 19 19 19
+indep: fp1 cs1 rx b2 width  27 27 26 27 26 26 26 26
+indep: fp1 cs1 rx b3 centre 17 17 17 17 18 17 18 18
+indep: fp1 cs1 rx b3 width  27 27 27 27 27 27 26 27
+indep: fp1 cs1 tx b0 centre 34 34 34 34 34 34 34 34
+indep: fp1 cs1 tx b0 width  28 28 28 28 27 27 27 27
+indep: fp1 cs1 tx b1 centre 34 34 34 34 34 34 34 34
+indep: fp1 cs1 tx b1 width  28 28 27 27 27 27 27 27
+indep: fp1 cs1 tx b2 centre 34 34 34 33 34 34 34 34
+indep: fp1 cs1 tx b2 width  28 28 28 27 27 28 27 27
+indep: fp1 cs1 tx b3 centre 34 34 34 34 34 34 34 34
+indep: fp1 cs1 tx b3 width  27 27 27 27 27 28 27 27
+indep: fp1 cs1 verify OK (0/3 patterns bad)
+indep: eye training done in 33234113 us, verify OK (0 rank-fails), MR14 check rc 0
+k1-ddr: DFC fp2 in 26 us: ctl_freq 0xa0800400 pi_cfg 0x8 status 0x33 clksel 0x00033b40
+k1-ddrt: pass pp2 cs_num 2
+k1-ddrt: pp2 ok: rx vref idx 5 (min 11), tx mr14 31 (min 10)
+k1-ddr: pass 3 pp2 rc 0 stage none cs 0: rx idx 5, mr14 31, phy_status 0x0, 8666 us
+  sr_stat before 0x33 after-enter 0x77 after-exit 0x33
+  pi wl   ops 2 stale-first 0 max-polls 1 max-us 13 stage-us 46
+  pi gate ops 2 stale-first 0 max-polls 1 max-us 12 stage-us 63
+  pi rx   ops 34 stale-first 0 max-polls 1 max-us 13 stage-us 4214
+  pi tx   ops 34 stale-first 0 max-polls 2 max-us 17 stage-us 4343
+  rx min cs1  8  9  9 10 10 11 11 10 10  9  8  8  7  0  0  0
+  tx min cs1  8  9  9  9  9  9  9  9  9  9 10 10 10 10 10 10
+  rx min cs2  8  9  9 10 10 11 11 10 10  9  8  7  7  0  0  0
+  tx min cs2  9  9  9  9  9  9  9 10 10 10 10 10 10 10 10  9
+  state: vref0 0x5555a937 vref1 0x5555a927 txvref 0x9d1f4314 (mr14 field 31) phy_status 0x0 pi_status 0x80008067
+   cs0 wl     20  24  19  23   gate 0x00012122 0x00011f20 0x00012324 0x00011f20
+    rx dq0   b0:18 b1:17 b2:18 b3:18
+    tx dq0   b0:34 b1:37 b2:33 b3:37
+    tx dm    b0:34 b1:37 b2:33 b3:37
+   cs1 wl     20  23  19  22   gate 0x00012324 0x00012120 0x00012324 0x00011f20
+    rx dq0   b0:18 b1:17 b2:19 b3:18
+    tx dq0   b0:34 b1:37 b2:33 b3:36
+    tx dm    b0:34 b1:36 b2:33 b3:36
+  out of range: cs0 b1 WL 24 (17..23)
+  out of range: cs0 b1 gate 0x00011f20 (0x0001ggtg, 33..40)
+  out of range: cs0 b1 Tx DQ0 37 (30..36)
+  out of range: cs0 b3 gate 0x00011f20 (0x0001ggtg, 33..40)
+  out of range: cs0 b3 Tx DQ0 37 (30..36)
+  out of range: cs1 b1 gate 0x00012120 (0x0001ggtg, 33..40)
+  out of range: cs1 b1 Tx DQ0 37 (30..36)
+  out of range: cs1 b3 gate 0x00011f20 (0x0001ggtg, 33..40)
+k1-ddr: DFC fp2 in 26 us: ctl_freq 0xa0800400 pi_cfg 0x8 status 0x33 clksel 0x00033b40
+  cs0 ch0 MR5:0xff MR6:0x07 MR8:0x58 MR12:0x5d MR14:0x1f
+  cs0 ch1 MR5:0xff MR6:0x07 MR8:0x58 MR12:0x5d MR14:0x1f
+  cs1 ch0 MR5:0xff MR6:0x07 MR8:0x58 MR12:0x5d MR14:0x1f
+  cs1 ch1 MR5:0xff MR6:0x07 MR8:0x58 MR12:0x5d MR14:0x1f
+indep: eye training at fp2, 2 rank(s)
+indep: fp2 cs0 wl centre 20 23 19 23 width 10 9 10 10
+indep: fp2 cs1 wl centre 20 22 18 22 width 10 9 9 9
+indep: fp2 rx vref A best 6 (min window 11) widths 8 8 9 9 10 10 11 10 10 9 9 8 7 0 0 0
+indep: fp2 rx vref B best 5 (min window 10) widths 7 8 8 9 9 10 10 10 10 9 8 7 1 0 0 0
+indep: fp2 tx mr14 best 27 (min window 11) widths 10 10 10 10 10 10 11 11 11 11 11 11 11 11 10 11
+indep: fp2 cs0 buf 0x8000000
+indep: fp2 cs0 rx b0 centre 18 18 18 17 18 18 18 19
+indep: fp2 cs0 rx b0 width  11 10 10 11 11 11 11 10
+indep: fp2 cs0 rx b1 centre 18 18 18 18 18 18 18 18
+indep: fp2 cs0 rx b1 width  11 10 10 11 11 10 11 11
+indep: fp2 cs0 rx b2 centre 18 18 18 18 19 19 18 18
+indep: fp2 cs0 rx b2 width  10 10 10 10 10 10 11 11
+indep: fp2 cs0 rx b3 centre 18 17 18 18 18 17 18 18
+indep: fp2 cs0 rx b3 width  10 9 10 10 11 9 9 10
+indep: fp2 cs0 tx b0 centre 35 35 35 35 36 36 36 36
+indep: fp2 cs0 tx b0 width  12 13 11 12 12 11 12 12
+indep: fp2 cs0 tx b1 centre 38 38 38 38 38 37 38 38
+indep: fp2 cs0 tx b1 width  12 12 10 11 10 11 11 11
+indep: fp2 cs0 tx b2 centre 34 34 34 33 34 34 34 34
+indep: fp2 cs0 tx b2 width  12 11 12 11 11 11 11 11
+indep: fp2 cs0 tx b3 centre 38 38 37 38 37 37 38 37
+indep: fp2 cs0 tx b3 width  12 12 11 12 11 13 12 11
+indep: fp2 cs0 verify OK (0/3 patterns bad)
+indep: fp2 cs1 buf 0x288000000
+indep: fp2 cs1 rx b0 centre 19 18 18 18 19 19 19 19
+indep: fp2 cs1 rx b0 width  10 10 9 10 10 10 10 9
+indep: fp2 cs1 rx b1 centre 18 18 18 18 18 18 18 18
+indep: fp2 cs1 rx b1 width  11 11 10 11 11 11 11 11
+indep: fp2 cs1 rx b2 centre 18 18 18 18 19 19 19 19
+indep: fp2 cs1 rx b2 width  10 9 10 10 10 10 10 10
+indep: fp2 cs1 rx b3 centre 18 18 17 17 18 17 18 17
+indep: fp2 cs1 rx b3 width  10 10 11 11 11 11 10 11
+indep: fp2 cs1 tx b0 centre 35 35 35 35 36 36 36 36
+indep: fp2 cs1 tx b0 width  13 13 11 12 12 12 12 12
+indep: fp2 cs1 tx b1 centre 37 37 37 37 37 36 37 37
+indep: fp2 cs1 tx b1 width  12 12 10 11 11 11 11 11
+indep: fp2 cs1 tx b2 centre 33 33 33 32 33 33 33 33
+indep: fp2 cs1 tx b2 width  12 11 11 11 11 11 11 11
+indep: fp2 cs1 tx b3 centre 37 37 36 37 36 36 36 36
+indep: fp2 cs1 tx b3 width  12 12 11 12 11 11 11 11
+indep: fp2 cs1 verify OK (0/3 patterns bad)
+indep: eye training done in 24209749 us, verify OK (0 rank-fails), MR14 check rc 0
+k1-ddr: rc 0 (none) in 63249303 us: 4 passes, MR5 0xff MR8 0x58 x8, 16384 MB, fp2 ctl_freq 0xa0800400 status 0x33 clksel 0x00033b40, 13 item(s) out of range
+DDR is ready
+jedec_spi_nor flash@0: unrecognized JEDEC id bytes: 00, 00, 00
+Fail to detect spi nor flash.
+SPL: Unsupported Boot Device!
+Trying to boot from MMC1
+[ 112.578] 
+
+U-Boot 2022.10spacemit-dirty (Nov 11 2024 - 12:14:46 +0000), Build: jenkins-BSP-build-deb-363
+
+[ 112.587] CPU:   rv64imafdcv
+[ 112.589] Model: spacemit k1-x deb1 board
+[ 112.592] DRAM:  DDR size = 8192 MB
+[ 112.596] DDR size = 8192 MB
+[ 112.599] DDR size = 8192 MB
+[ 112.601] 8 GiB

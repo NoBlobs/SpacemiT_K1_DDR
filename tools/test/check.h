@@ -76,4 +76,9 @@ void test_accept_pp2_2400(void);
 void test_accept_pp0b_gate(void);
 void test_accept_prints(void);
 
+/* test_eye.c */
+void test_cs1_cpu_buf(void);
+void test_indep_eye_2cs(void);
+void test_indep_eye_seed_outside(void);
+
 #endif /* K1_TEST_CHECK_H */

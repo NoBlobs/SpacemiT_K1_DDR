@@ -10,6 +10,10 @@
 uint32_t k1_mock_read32(uintptr_t addr);
 void k1_mock_write32(uintptr_t addr, uint32_t val);
 
+static inline void k1_io_fence(void)
+{
+}
+
 static inline uint32_t k1_r32(uintptr_t addr)
 {
 	return k1_mock_read32(addr);

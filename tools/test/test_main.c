@@ -545,6 +545,9 @@ int main(int argc, char **argv)
 		{ "doc 21 acceptance: 2400 first pp2 (incl. 2666 eye)", test_accept_pp2_2400 },
 		{ "doc 21 acceptance: 2nd pp0 gate", test_accept_pp0b_gate },
 		{ "blob UART dump of a pass and of the MRs", test_accept_prints },
+		{ "CS1 CPU buffer from map words", test_cs1_cpu_buf },
+		{ "independent eye, 2 CS, fp2", test_indep_eye_2cs },
+		{ "independent eye linear fallback from a bad seed", test_indep_eye_seed_outside },
 	};
 
 	g_log = argc > 1 && !strcmp(argv[1], "-v");

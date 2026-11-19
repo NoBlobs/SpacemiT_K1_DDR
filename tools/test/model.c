@@ -83,6 +83,40 @@ static uint32_t *byte_reg(uint32_t pp, uint32_t cs0, uint32_t b, uint32_t off)
 		   off);
 }
 
+static bool phy_is_vref(uint32_t off)
+{
+	for (uint32_t pp = 0; pp <= K1_MAX_PP; pp++) {
+		const uint32_t s = slice_off(pp);
+
+		if (off == s + K1_SLICE_VREF0 || off == s + K1_SLICE_VREF1)
+			return true;
+	}
+	return false;
+}
+
+static bool phy_is_eye_tap(uint32_t off)
+{
+	for (uint32_t pp = 0; pp <= K1_MAX_PP; pp++) {
+		for (uint32_t cs = 0; cs < 2; cs++) {
+			for (uint32_t b = 0; b < K1_N_BYTES; b++) {
+				const uint32_t base = slice_off(pp) +
+					K1_BYTE_OFF[b] + (cs << K1_PHY_CS_SHIFT);
+
+				if (off < base)
+					continue;
+				const uint32_t rel = off - base;
+
+				if ((rel & 3) != 0 || rel > K1_BYTE_RX_DQ + 28)
+					continue;
+				if (rel <= 0x1c || rel == K1_BYTE_WL ||
+				    rel >= K1_BYTE_RX_DQ)
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
 static void record(enum model_ev ev)
 {
 	g_model.ev_count[ev]++;
@@ -123,6 +157,61 @@ uint8_t model_default_tx_margin(const struct model *m, uint32_t step,
 {
 	return clamp_margin(11 - 2 * absdiff(step, m->tx_peak) -
 			    (int)((dq * 5 + step * 3 + cs) % 3));
+}
+
+static int eye_half(uint32_t peak, uint32_t step, int max_half)
+{
+	const int h = max_half - absdiff(peak, step);
+
+	return h < 0 ? 0 : h;
+}
+
+void model_seed_indep_eye(uint32_t fp)
+{
+	for (uint32_t cs = 0; cs < 2; cs++) {
+		for (uint32_t b = 0; b < K1_N_BYTES; b++) {
+			*byte_reg(fp, cs, b, K1_BYTE_WL) = 20;
+			for (uint32_t l = 0; l < K1_N_LANES; l++) {
+				*byte_reg(fp, cs, b, K1_BYTE_RX_DQ + 4 * l) = 16;
+				*byte_reg(fp, cs, b, K1_BYTE_TX_DQ + 4 * l) = 36;
+			}
+		}
+	}
+}
+
+bool k1_mock_eye_fail(uint32_t fp)
+{
+	const uint32_t s = slice_off(fp);
+	const uint32_t rx0 = (*phy(s + K1_SLICE_VREF0) >> 16) & 0xf;
+	const uint32_t rx1 = (*phy(s + K1_SLICE_VREF1) >> 16) & 0xf;
+	const uint32_t mr14 = (*mc_bank(fp, K1_MC_TXVREF) >> 16) & 0x3f;
+	const uint32_t tx_step = mr14 >= K1_TX_VREF_SEED0 ?
+				 mr14 - K1_TX_VREF_SEED0 : 99;
+	const int tx_h = eye_half(g_model.tx_peak, tx_step, 7);
+	const int wl_h = 5;
+
+	for (uint32_t cs = 0; cs < 2; cs++) {
+		for (uint32_t b = 0; b < K1_N_BYTES; b++) {
+			const int rx_h = eye_half(g_model.rx_peak,
+						  b < 2 ? rx0 : rx1, 7);
+			const uint32_t wl = *byte_reg(fp, cs, b, K1_BYTE_WL) & 31;
+
+			if (absdiff(wl, 20) > wl_h)
+				return true;
+			for (uint32_t l = 0; l < K1_N_LANES; l++) {
+				const uint32_t rx =
+					*byte_reg(fp, cs, b, K1_BYTE_RX_DQ + 4 * l) &
+					K1_RX_DLY_MASK;
+				const uint32_t tx =
+					*byte_reg(fp, cs, b, K1_BYTE_TX_DQ + 4 * l) &
+					K1_TX_DLY_MASK;
+
+				if (absdiff(rx, 16) > rx_h || absdiff(tx, 36) > tx_h)
+					return true;
+			}
+		}
+	}
+	return false;
 }
 
 /* PHY state after power-on or an MC reset */
@@ -929,6 +1018,8 @@ static void write_user0(uint32_t v)
 static void write_ca(uint32_t v)
 {
 	if (v == K1_CA_OP_TXVREF && g_model.in_sr) {
+		if (!g_model.dram_ready)
+			violate("MR14 write before DRAM init");
 		set_die_mr14_from_bank(regs[K1_MC_FREQ / 4] >> K1_FREQ_PP_SHIFT);
 		record(EV_MR14_SET);
 		return;
@@ -965,7 +1056,7 @@ static void write_ca(uint32_t v)
 		return;
 	}
 	if ((v & 0xf0ff'0000) == K1_CA_MR_WRITE && !g_model.in_sr &&
-	    !g_model.strict) {
+	    (!g_model.strict || (v & 0xff) == 14)) {
 		const uint32_t mr = v & 0xff;
 		const uint32_t live = regs[K1_MC_FREQ / 4] >> K1_FREQ_PP_SHIFT;
 
@@ -992,8 +1083,6 @@ static void write_ca(uint32_t v)
 
 static void write_phy(uint32_t off, uint32_t v)
 {
-	const uint32_t s = slice_off(g_model.boot_pp);
-
 	if (off == K1_PHY_INIT) {
 		if (!g_model.in_sr)
 			violate("PHY_INIT outside self-refresh");
@@ -1004,12 +1093,12 @@ static void write_phy(uint32_t off, uint32_t v)
 		if (v != (*phy(off) & ~K1_ST_RL))
 			violate("PHY status write 0x%x is not a bit-2 clear", v);
 	} else if (g_model.in_sr || g_model.strict) {
-		if (off == s + K1_SLICE_VREF0 || off == s + K1_SLICE_VREF1) {
+		if (phy_is_vref(off)) {
 			const uint32_t lo = v & 0xffff;
 
 			if (lo != 0xa927 && lo != 0xa937)
 				violate("Vref low half changed to 0x%04x", lo);
-		} else {
+		} else if (!(g_model.strict && phy_is_eye_tap(off))) {
 			violate("unexpected PHY write at +0x%x = 0x%08x", off, v);
 		}
 	} else if (off < K1_PHY_OTHER && (off & 0x3dff) == K1_SLICE_COMMON0) {
