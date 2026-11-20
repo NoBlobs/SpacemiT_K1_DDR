@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 003 — Independent write leveling + Vref + delay on 16 GiB Micron
 
 - **Date:** 2026-11-19

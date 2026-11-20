@@ -1,0 +1,3 @@
+u-boot: 934995f642a Merge tag 'u-boot-imx-main-20261107' of https://git.u-boot-project.org/u-boot/custodians/u-boot-imx
+tree:   /home/thalles/k1-eye-build/u-boot
+config: spacemit_k1_defconfig + K1_VEHICLE_RATE=1333

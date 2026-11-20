@@ -22,8 +22,9 @@
 
 #include "k1_ddrt.h"
 
-void k1_ddr_eye_measure(uintptr_t ddr, uint32_t cs_num, uint32_t fp,
-			const struct k1_ddrt_env *env);
+/* Returns K1_DDRT_OK if every rank verifies and MR14 matches the bank. */
+int k1_ddr_eye_measure(uintptr_t ddr, uint32_t cs_num, uint32_t fp,
+		       const struct k1_ddrt_env *env);
 
 /* CS1 CPU buffer: map start in 8 MiB units, plus the 2–4 GiB hole, plus 128 MiB. */
 uint64_t k1_eye_cs1_cpu(uint32_t cs1_hi, uint32_t map);

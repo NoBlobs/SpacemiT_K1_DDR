@@ -181,6 +181,9 @@ void model_seed_indep_eye(uint32_t fp)
 
 bool k1_mock_eye_fail(uint32_t fp)
 {
+	if (g_model.eye_force_fail)
+		return true;
+
 	const uint32_t s = slice_off(fp);
 	const uint32_t rx0 = (*phy(s + K1_SLICE_VREF0) >> 16) & 0xf;
 	const uint32_t rx1 = (*phy(s + K1_SLICE_VREF1) >> 16) & 0xf;

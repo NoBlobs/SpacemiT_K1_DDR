@@ -29,7 +29,9 @@ the model and the scripts live in ``tools/test/``.
        (265 facts)
 
 A full run of the suite prints one ``ok``/``FAIL`` line per test and ends with
-``1426 checks, 0 failures``.
+``1578 checks, 0 failures``. Independent-eye cases include a 2-rank train, a
+linear fallback from a seed outside the window, and a forced pattern mismatch
+that must return ``K1_DDRT_EIO``.
 
 How the code is connected to the model
 ======================================
@@ -89,6 +91,8 @@ What it simulates
   ``latency`` status reads, writing taps and harvest from per-test margin
   functions (``rx_margin``, ``tx_margin``); defaults put the Rx peak at index 5
   and the Tx peak at index 7, with the worst DQ moving with step and rank.
+* **Independent eye**: geometric RX/TX/WL windows for the memory-pattern
+  path; ``eye_force_fail`` makes every pattern mismatch.
 * **Mode registers**: MR5/6/8/12 values of an x8 8 Gb part, MR14 per die and
   channel following the MR14 commands and DFCs, MR13 reading 0, and the first
   MRR after the first DFC to fp2 reading 0.
@@ -100,7 +104,8 @@ Knobs (per test)
 ``final_status_bits``, ``latency``, ``clear_delay`` (stale done bits after a
 command), ``pll_never_locks``, ``swfc_stuck``, ``dfc_stuck``, ``dfi_stuck``,
 ``dram_init_stuck``, ``pmu_delay``, ``freq_read_or`` (stuck bits on ``CTL_FREQ``
-reads), ``win_alias``, ``dfc_no_mr14``, ``time_step_us``, ``rx_peak``,
+reads), ``win_alias``, ``dfc_no_mr14``, ``eye_force_fail``, ``time_step_us``,
+``rx_peak``,
 ``tx_peak``, custom margin functions, and ``mr[]`` contents (e.g. MR8).
 
 Violations

@@ -26,12 +26,25 @@ PLL1 is programmed for 2400 unless 2666 is requested
 including 1066, 1200 and 2133, gets the 2400 setting, which then drives fp0
 (PLL1/2) and fp2 (PLL1/1).
 
-Range checks never fail the boot
---------------------------------
+Range checks never fail the boot (PI harvest path)
+--------------------------------------------------
 
 ``k1_ddr_accept_*`` only print and count. A pass whose results fall outside the
 reference ranges still returns 0 if the hardware reported no error. The count
-appears as ``N item(s) out of range`` in the final line.
+appears as ``N item(s) out of range`` in the final line. With ``K1_INDEP_EYE``
+those harvest checks are skipped on cold boot and on the re-train entry; the
+boot fails only when the independent memory-pattern verify (or MR14) fails
+(:doc:`acceptance-and-logging`).
+
+``data_rate`` 1333 is not 1333 MT/s
+----------------------------------
+
+``k1_ddr_final_fp()`` has no 1333 case (it falls through to fp0).
+``k1_ddr_pll_init()`` programmes the 2666 VCO only when ``data_rate == 2666``.
+A SPL request of 1333 therefore parks at fp0 with the **2400** PLL1 pair
+(1200 MT/s). The 1333 MT/s characterisation in the specification uses the
+2666 VCO on fp0. Measured on the 16 GiB Micron board: independent verify OK
+at that mapping, DRAM probes 0 errors.
 
 Mainline cannot see a failure
 -----------------------------
@@ -77,10 +90,12 @@ One rank: the training MR14 command addresses both ranks
 the two-rank form, even when ``cs_num == 1``. Everywhere else
 (``k1_ddr_mr_write()``, the DFC table rewrite) the rank byte follows ``cs_sel``.
 The test model accepts the two-rank form in self-refresh regardless of the rank
-count, so the tests do not catch it. Not observed on hardware (no one-rank board
-was available). Closing it: build the command as ``K1_CA_MR_WRITE | (cs_sel <<
-24) | 14``, make the model reject a rank byte that names an absent rank, and add
-a mutant.
+count, so the tests do not catch it. Observed on the 16 GiB Micron **two-rank**
+package with SPL ``cs_num 1``: independent CS0 verify passed; a following PI
+pass (which still issues ``0x1302000e``) did not keep DRAM at ``0x40000000``
+and ``0x1c0000000``. Closing it: build the command as ``K1_CA_MR_WRITE |
+(cs_sel << 24) | 14``, make the model reject a rank byte that names an absent
+rank, and add a mutant. A true one-rank board is still unmeasured.
 
 One rank: MISC entries of the DFC table keep the two-rank byte
 --------------------------------------------------------------

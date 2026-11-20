@@ -146,8 +146,11 @@ tree that holds the signing tool (`VENDOR_UBOOT=`), which is only executed.
   sequence is characterized at 2400 MT/s and at 2666 MT/s, the SoC maximum.
 - 16 GiB Micron BPI-F3 (`MT53E4G32D8`, 2 ranks): independent write leveling,
   RX/TX Vref and delay training is measured on both ranks at every frequency
-  point (verify OK; two-stage search about 3.2 s). The DQS read-gate stays
-  with the PI.
+  point (verify OK; two-stage search about 3.2 s) at SPL `data_rate` 1066,
+  1200, 1333, 2400 and 2666. `ddr_init` returns an error if that verify
+  fails. The DQS read-gate stays with the PI. `cs_num 1` on this two-rank
+  package trains CS0 only (8 GiB mapped); a following PI pass does not keep
+  DRAM at two mid-window addresses.
 - 1-rank / x16 (4 GiB) and LPDDR4 (non-X) configurations are described from
   encodings and command formats but have not been measured on hardware.
 - The PI training sequencer is used as a black box; its internal algorithm is

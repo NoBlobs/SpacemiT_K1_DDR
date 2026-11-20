@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 013 — F6 two-stage short probes (D-cache off)
 
 - **Date:** 2026-11-19

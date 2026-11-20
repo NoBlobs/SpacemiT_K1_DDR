@@ -28,7 +28,7 @@ void test_indep_eye_2cs(void)
 	model_reset(DDR, fp, 2);
 	model_seed_indep_eye(fp);
 	log_clear();
-	k1_ddr_eye_measure(DDR, 2, fp, &env);
+	CHECK_EQ(k1_ddr_eye_measure(DDR, 2, fp, &env), K1_DDRT_OK);
 	CHECK_CLEAN();
 	CHECK(log_has("verify OK"));
 	CHECK(log_has("MR14 check rc 0"));
@@ -61,8 +61,21 @@ void test_indep_eye_seed_outside(void)
 	model_poke(DDR + K1_PHY_OFF + (fp << K1_PHY_SLICE_SHIFT) +
 		   K1_BYTE_OFF[0] + K1_BYTE_RX_DQ, 0);
 	log_clear();
-	k1_ddr_eye_measure(DDR, 1, fp, &env);
+	CHECK_EQ(k1_ddr_eye_measure(DDR, 1, fp, &env), K1_DDRT_OK);
 	CHECK_CLEAN();
 	CHECK(log_has("verify OK"));
 	CHECK_EQ(eye_tap(fp, 0, 0, K1_BYTE_RX_DQ) & K1_RX_DLY_MASK, 16);
+}
+
+void test_indep_eye_verify_fail(void)
+{
+	const uint32_t fp = 2;
+	const struct k1_ddrt_env env = env_timed();
+
+	model_reset(DDR, fp, 1);
+	model_seed_indep_eye(fp);
+	g_model.eye_force_fail = true;
+	log_clear();
+	CHECK_EQ(k1_ddr_eye_measure(DDR, 1, fp, &env), K1_DDRT_EIO);
+	CHECK(log_has("verify FAIL"));
 }

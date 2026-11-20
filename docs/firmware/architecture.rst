@@ -13,7 +13,8 @@ layer calls only the layers below it.
      start.S  blob.c  fmt.c  blob.ld
    ------------------------------------------------------------------------
    lib/k1_ddr_boot.c    boot sequence: which step, in which order
-   lib/k1_ddr_accept.c  range checks and UART dumps (informational)
+   lib/k1_ddr_accept.c  PI-harvest range checks and UART dumps (informational)
+   lib/k1_ddr_eye.c     independent WL/Vref/delay from a memory pattern
    ------------------------------------------------------------------------
    lib/k1_ddr_init.c    PLL, SW-FC, Device_Init, MC reset, map, DFC        (hw drivers)
    lib/k1_ddrt.c        one training pass, MR read, wait primitives
@@ -58,6 +59,9 @@ Files and public API
      - Range checks and printing
      - ``k1_ddr_accept_final``, ``k1_ddr_accept_pp2_2400``,
        ``k1_ddr_accept_pp0b_gate``, ``k1_ddr_print_*``
+   * - ``lib/k1_ddr_eye.h``
+     - Independent data-eye (production path with ``K1_INDEP_EYE``)
+     - ``k1_ddr_eye_measure``, ``k1_eye_cs1_cpu``
    * - ``lib/k1_ddrt_priv.h``
      - Shared helpers
      - ``k1_log``, ``k1_now``, ``k1_wait``, ``k1_wait_n``, ``k1_udelay``
@@ -91,9 +95,10 @@ Call flow of a cold boot
            k1_boot_dfc(final fp)
 
 After every pass the boot sequence calls the optional ``on_pass`` observer; the
-image uses it to print the pass and run the range checks
-(:doc:`entry-points`). The order of the sequence and the hardware steps it
-drives are the clean-room boot sequence [spec: :dc:`boot-sequence`].
+image uses it to print the pass and, depending on ``K1_INDEP_EYE``, either the
+PI-harvest range checks or the independent eye (:doc:`entry-points`). The
+order of the sequence and the hardware steps it drives are the clean-room
+boot sequence [spec: :dc:`boot-sequence`].
 
 Data types
 ==========
@@ -174,8 +179,8 @@ All functions return an ``int`` from ``enum k1_ddrt_err``:
    * - ``K1_DDRT_EIO``
      - −5
      - hardware answered but wrongly: gate timeout or untrained code,
-       ``PHY_STATUS != 0``, MR14 mismatch, MC not holding writes, DFC landed on
-       the wrong bank, DFC refused
+       ``PHY_STATUS != 0``, MR14 mismatch, independent pattern verify fail,
+       MC not holding writes, DFC landed on the wrong bank, DFC refused
    * - ``K1_DDRT_EINVAL``
      - −22
      - bad arguments, or an MR8 the address map does not support

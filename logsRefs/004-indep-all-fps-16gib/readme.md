@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 004 — Independent WL+Vref+delay at every frequency point (16 GiB)
 
 - **Date:** 2026-11-19

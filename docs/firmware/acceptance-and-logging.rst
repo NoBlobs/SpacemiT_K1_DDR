@@ -9,9 +9,14 @@ Range checks (``lib/k1_ddr_accept.c``)
 
 Three functions compare the result of a pass with the reference ranges of the
 reference board [spec: :dc:`reference-measurements`]. Each prints one
-``  out of range: …`` line per item and returns the number of items. **They
-never change a return code**: the image counts the items and reports them in its
-final line; a failed boot is decided only by the training and bring-up code.
+``  out of range: …`` line per item and returns the number of items.
+
+With ``K1_INDEP_EYE`` (the production data-eye path) the blob **does not**
+run these PI-harvest checks on cold boot: the Samsung 8 GiB doc-21 windows
+do not match Micron taps that still verify. ``ddr_init`` instead returns
+``K1_DDRT_EIO`` when the independent memory-pattern verify (or the MR14
+check) fails. Without ``K1_INDEP_EYE`` the functions still never change a
+return code; the image only counts the items on the final line.
 
 ``k1_ddr_accept_final(env, res, cs_num, mr14_rc)``
 --------------------------------------------------
@@ -92,11 +97,15 @@ Where the checks run
    * - caller
      - checks
    * - ``boot_on_pass`` in ``blob.c`` (cold boot)
-     - 2nd pass → ``pp0b_gate``; successful fp2 pass → ``final`` (with
-       ``mr14_rc = OK``; the MR14 check of the boot happens after the next DFC)
-       and, at 2400, ``pp2_2400``
+     - without ``K1_INDEP_EYE``: 2nd pass → ``pp0b_gate``; successful fp2
+       pass → ``final`` (with ``mr14_rc = OK``; the MR14 check of the boot
+       happens after the next DFC) and, at 2400, ``pp2_2400``. With
+       ``K1_INDEP_EYE``: skip those counts; fail ``ddr_init`` if
+       ``k1_ddr_eye_measure`` returns non-zero.
    * - ``k1_blob_retrain``
-     - at fp2 → ``final`` with the real MR14 check result
+     - without ``K1_INDEP_EYE``, at fp2 → ``final`` with the real MR14 check
+       result. With ``K1_INDEP_EYE`` that harvest count is skipped; a failed
+       MR14 check still fails the re-train return code.
    * - tests (``tools/test/test_accept.c``)
      - each item in and out of range, and the exact messages
 

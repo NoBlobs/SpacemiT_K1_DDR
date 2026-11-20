@@ -74,7 +74,10 @@ Run from ``src/`` (or with ``make -C src``):
 
 Variables: ``BUILD`` (default ``../build``, i.e. ``build/``, ignored by git),
 ``TOOLS`` (default ``../tools``; the test sources are in ``$(TOOLS)/test``),
-``BLOB_DEFS`` (extra flags for the image, used by the error-injection builds),
+``BLOB_DEFS`` (defaults to ``-DK1_INDEP_EYE``, the production data-eye path;
+passing an empty ``BLOB_DEFS=`` to ``make`` overrides that and drops the
+independent eye — ``tools/vehicle/build-vehicle.sh`` therefore omits the
+variable unless ``EXP=`` is set),
 ``SPEC_DOCS`` (directory of the specification in the format ``check_tables.py``
 parses; quote it if the path has spaces).
 

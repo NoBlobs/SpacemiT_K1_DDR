@@ -69,6 +69,7 @@ struct boot_obs {
 	uint32_t data_rate;
 	uint32_t n;
 	uint32_t bad;
+	int eye_rc;
 };
 
 /* gate after the x8 re-init and the doc 21 ranges at the final pp */
@@ -83,6 +84,18 @@ static void boot_on_pass(void *ctx, const struct k1_ddrt_result *r, uint32_t pp)
 	    r->stage_us[0] + r->stage_us[1] + r->stage_us[2] + r->stage_us[3]);
 	k1_ddr_print_pass_stats(env, r, o->cs_num);
 	k1_ddr_print_result(env, "state", r, o->cs_num);
+#ifdef K1_INDEP_EYE
+	/* Doc-21 PI harvest ranges are Samsung-centric; Micron WL/Tx/gate
+	 * taps sit outside them with a passing pattern. Production quality
+	 * is the independent memory-pattern verify (and PHY_STATUS on the PI
+	 * pass, which already fails r->rc). */
+	if (!r->rc && !o->eye_rc && o->n >= 1 &&
+	    pp != k1_ddr_final_fp(K1_DDR_LPDDR4X, o->data_rate)) {
+		o->eye_rc = k1_ddr_eye_measure(o->ddr, o->cs_num, pp, env);
+		if (o->eye_rc)
+			o->bad++;
+	}
+#else
 	if (o->n == 1)
 		o->bad += k1_ddr_accept_pp0b_gate(env, r, o->cs_num);
 	if (!r->rc && pp == 2) {
@@ -90,12 +103,6 @@ static void boot_on_pass(void *ctx, const struct k1_ddrt_result *r, uint32_t pp)
 		if (o->data_rate == 2400)
 			o->bad += k1_ddr_accept_pp2_2400(env, r);
 	}
-#ifdef K1_INDEP_EYE
-	/* Production data-eye: PI leave-up only. Pass 0 is before the
-	 * address map. The final fp is re-centred after the last DFC. */
-	if (!r->rc && o->n >= 1 &&
-	    pp != k1_ddr_final_fp(K1_DDR_LPDDR4X, o->data_rate))
-		k1_ddr_eye_measure(o->ddr, o->cs_num, pp, env);
 #endif
 	o->n++;
 }
@@ -138,7 +145,14 @@ int k1_blob_ddr_init(uint64_t ddr_base, uint32_t cs_num, uint32_t data_rate,
 		k1_ddr_print_mrs(&env, &mc);
 #ifdef K1_INDEP_EYE
 		/* final DFC re-sends MR14 from the bank; re-centre at the live fp */
-		k1_ddr_eye_measure(cfg.ddr, cs_num, rep.final_pp, &env);
+		if (!obs.eye_rc) {
+			obs.eye_rc = k1_ddr_eye_measure(cfg.ddr, cs_num,
+							rep.final_pp, &env);
+			if (obs.eye_rc)
+				obs.bad++;
+		}
+		if (!rc && obs.eye_rc)
+			rc = obs.eye_rc;
 #endif
 	}
 	out(&env, "k1-ddr: rc %d (%s) in %u us: %u passes, MR5 0x%02x MR8 0x%02x%s, %u MB, fp%u ctl_freq 0x%08x status 0x%02x clksel 0x%08x, %u item(s) out of range\n",
@@ -215,12 +229,14 @@ int k1_blob_retrain(uint64_t ddr_base, uint32_t cs_num, k1_puts_fn puts,
 	out(&env, "  MR14 check rc %d\n", mr14_rc);
 	k1_ddr_print_mrs(&env, &cfg);
 
+#ifndef K1_INDEP_EYE
 	if (pp == 2) {
 		const uint32_t bad = k1_ddr_accept_final(&env, &res, cs_num, mr14_rc);
 
 		out(&env, "  acceptance (doc 21, final pp): %u item(s) out of range\n",
 		    bad);
 	}
+#endif
 	if (!rc && mr14_rc)
 		rc = mr14_rc;
 	out(&env, "k1-ddrt retrain: rc %d\n", rc);

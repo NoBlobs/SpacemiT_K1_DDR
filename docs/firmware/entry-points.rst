@@ -50,11 +50,15 @@ This is the function mainline U-Boot's SPL calls as ``ddr_init``
    and ``data_rate``, and **``type = K1_DDR_LPDDR4X``** (the ABI carries no
    memory type; this image is the LPDDR4X build).
 #. Registers ``boot_on_pass`` as the ``on_pass`` observer, with a small
-   ``struct boot_obs`` context (pass counter and an "out of range" counter).
+   ``struct boot_obs`` context (pass counter, an "out of range" counter, and
+   with ``K1_INDEP_EYE`` the independent-eye return code).
 #. Calls ``k1_ddr_boot()``.
-#. On success, prints MR5/6/8/12/14 of every (rank, channel).
-#. Prints a one-line summary and returns ``k1_ddr_boot()``'s return code
-   unchanged.
+#. On success, prints MR5/6/8/12/14 of every (rank, channel). With
+   ``K1_INDEP_EYE``, re-centres the live frequency point
+   (``k1_ddr_eye_measure``) unless an earlier independent train already
+   failed, then replaces a 0 from ``k1_ddr_boot()`` with that eye return
+   code if it is non-zero.
+#. Prints a one-line summary and returns that ``rc``.
 
 The pass observer
 -----------------
@@ -65,13 +69,18 @@ The pass observer
   phy_status …, … us``;
 * prints the per-stage PI statistics and the trained register state
   (``k1_ddr_print_pass_stats``, ``k1_ddr_print_result``);
-* on the **second** pass (the second fp0 pass) runs the gate-range check
-  ``k1_ddr_accept_pp0b_gate``;
-* on a successful **fp2** pass runs ``k1_ddr_accept_final`` and, when the
-  requested rate is 2400, ``k1_ddr_accept_pp2_2400``.
-
-The checks only count and print "out of range" items; they never change the
-return code (:doc:`acceptance-and-logging`).
+* without ``K1_INDEP_EYE``: on the **second** pass (the second fp0 pass)
+  runs the gate-range check ``k1_ddr_accept_pp0b_gate``; on a successful
+  **fp2** pass runs ``k1_ddr_accept_final`` and, when the requested rate is
+  2400, ``k1_ddr_accept_pp2_2400``. Those checks only count and print
+  "out of range" items; they never change the return code
+  (:doc:`acceptance-and-logging`).
+* with ``K1_INDEP_EYE``: skip those harvest counts. After every mapped pass
+  whose ``pp`` is not the final frequency point, run
+  ``k1_ddr_eye_measure``. A non-zero return is stored and counted as an
+  "out of range" item; later independent trains on this boot are skipped,
+  but the PI sequence continues. The live fp is trained after the last DFC
+  (see above).
 
 Final summary line
 ------------------
@@ -115,7 +124,8 @@ Sequence:
    per-step minima with the winners, the PI statistics and the "after" state.
 #. Checks MR14 on every (rank, channel) against ``CTL_TXVREF[21:16]``
    (``k1_ddrt_check_mr14``) and prints the mode registers again.
-#. At fp2 runs ``k1_ddr_accept_final`` (informational).
+#. Without ``K1_INDEP_EYE``, at fp2 runs ``k1_ddr_accept_final``
+   (informational). With ``K1_INDEP_EYE`` that harvest print is omitted.
 #. Returns the pass result, or the MR14 check result if the pass succeeded but
    the check failed.
 

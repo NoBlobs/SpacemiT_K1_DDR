@@ -80,5 +80,6 @@ void test_accept_prints(void);
 void test_cs1_cpu_buf(void);
 void test_indep_eye_2cs(void);
 void test_indep_eye_seed_outside(void);
+void test_indep_eye_verify_fail(void);
 
 #endif /* K1_TEST_CHECK_H */

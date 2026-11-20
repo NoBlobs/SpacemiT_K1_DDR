@@ -19,6 +19,8 @@
 #                                                -> FSBL-gpl-<mode>-exp.bin
 #   RATE=MT/s     the SPL asks ddr_init for this data_rate (default: the
 #                 SPL's, 2400 without EEPROM)    -> FSBL-gpl-<mode>...-<rate>.bin
+#   CS=1|2        the SPL asks ddr_init for this cs_num (default: EEPROM,
+#                 2 without EEPROM)              -> FSBL-gpl-<mode>...-csN.bin
 #   LAT=1         DRAM load latency (pointer chase) before K1DDRT-DONE
 #                                                -> FSBL-gpl-<mode>...-lat.bin
 #   RESET=        no reset after the run (default: on, off for emmc and
@@ -45,18 +47,24 @@ MODE=${MODE:-retrain}
 OUT=$IMPL/build/vehicle
 # relative to src/: make targets cannot hold the space in the checkout path
 BLOB_BUILD=../build
+# empty: src/Makefile production default (-DK1_INDEP_EYE). Passing BLOB_DEFS=
+# to make would override that and drop the independent eye.
 BLOB_DEFS=
 SUFFIX=
 # one-off silicon experiment: a define for the open firmware, own outputs
 if [ -n "${EXP:-}" ]; then
 	exp_tag=$(printf '%s' "${EXP#K1_EXP_}" | tr 'A-Z_' 'a-z-')
 	BLOB_BUILD=$BLOB_BUILD/exp-$exp_tag
-	BLOB_DEFS="$BLOB_DEFS -D$EXP"
+	BLOB_DEFS="${BLOB_DEFS:--DK1_INDEP_EYE} -D$EXP"
 	SUFFIX=$SUFFIX-exp-$exp_tag
 fi
 RATE=${RATE:-}
 if [ -n "$RATE" ]; then
 	SUFFIX=$SUFFIX-$RATE
+fi
+CS=${CS:-}
+if [ -n "$CS" ]; then
+	SUFFIX=$SUFFIX-cs$CS
 fi
 LAT=${LAT:-}
 if [ -n "$LAT" ]; then
@@ -98,25 +106,33 @@ case "$WORK" in
 *" "* | *:*) echo "WORK must not contain spaces or colons (U-Boot kbuild)"; exit 1 ;;
 esac
 
-make -C "$IMPL/src" blob BUILD="$BLOB_BUILD" BLOB_DEFS="$BLOB_DEFS"
+if [ -n "$BLOB_DEFS" ]; then
+	make -C "$IMPL/src" blob BUILD="$BLOB_BUILD" BLOB_DEFS="$BLOB_DEFS"
+else
+	make -C "$IMPL/src" blob BUILD="$BLOB_BUILD"
+fi
 
 mkdir -p "$WORK" "$OUT"
 rsync -a --delete --exclude .git "$UBOOT/" "$WORK/u-boot/"
 # vehicle hooks in board/spacemit/k1; skip if UBOOT already carries them
 # (the copy has no .git; the ceiling keeps git from finding a parent repo)
 for p in "$HERE"/u-boot/*.patch; do
-	if (cd "$WORK/u-boot" && GIT_CEILING_DIRECTORIES="$WORK" \
-		git apply --reverse --check "$p" 2>/dev/null); then
+	if (cd "$WORK/u-boot" && patch -p1 --dry-run --reverse --fuzz=3 \
+		< "$p" >/dev/null 2>&1); then
 		echo "  already applied: $(basename "$p")"
 	else
-		(cd "$WORK/u-boot" && GIT_CEILING_DIRECTORIES="$WORK" git apply "$p")
+		(cd "$WORK/u-boot" && patch -p1 --fuzz=3 < "$p")
 	fi
 done
 cp "$DDR_FW" "$WORK/ddr_fw.bin"
 cp "$GPL_FW" "$WORK/ddr_gpl.bin"
 
 # in-tree dtc, but binman uses the host python libfdt: no swig needed
+# OpenSSL 4 removed ENGINE; stubs keep mkimage/dumpimage linking.
+HOSTCFLAGS="${HOSTCFLAGS:-} -DOPENSSL_ENGINE_STUBS"
+
 make -C "$WORK/u-boot" O="$WORK/out" ARCH=riscv CROSS_COMPILE="$CROSS" \
+	HOSTCFLAGS="$HOSTCFLAGS" \
 	spacemit_k1_defconfig
 if [ -n "$EMMC" ]; then
 	"$WORK/u-boot/scripts/config" --file "$WORK/out/.config" \
@@ -139,10 +155,12 @@ if [ -n "$EMMC$UART" ]; then
 		CROSS_COMPILE="$CROSS" olddefconfig
 fi
 make -C "$WORK/u-boot" O="$WORK/out" ARCH=riscv CROSS_COMPILE="$CROSS" \
+	HOSTCFLAGS="$HOSTCFLAGS" \
 	CONFIG_PYLIBFDT= \
 	DDR_FW_FILE="$WORK/ddr_fw.bin" DDR_GPL_FILE="$WORK/ddr_gpl.bin" \
 	DDR_GPL_FULL="$FULL" K1_EMMC_TOOL="$EMMC" K1_VEHICLE_RESET="$RESET" \
-	K1_VEHICLE_UART="$UART" K1_VEHICLE_RATE="$RATE" K1_VEHICLE_LAT="$LAT" \
+	K1_VEHICLE_UART="$UART" K1_VEHICLE_RATE="$RATE" K1_VEHICLE_CS="$CS" \
+	K1_VEHICLE_LAT="$LAT" \
 	BINMAN_ALLOW_MISSING=1 -j"$(nproc)"
 
 SIGN=$WORK/sign

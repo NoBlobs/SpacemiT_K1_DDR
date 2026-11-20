@@ -419,8 +419,8 @@ static uint32_t k1_eye_train_rank(volatile uint32_t *mem,
 	return bad;
 }
 
-void k1_ddr_eye_measure(uintptr_t ddr, uint32_t cs_num, uint32_t fp,
-			const struct k1_ddrt_env *env)
+int k1_ddr_eye_measure(uintptr_t ddr, uint32_t cs_num, uint32_t fp,
+		       const struct k1_ddrt_env *env)
 {
 	const uint64_t t0 = k1_now(env);
 	const struct k1_ddrt_cfg mc = { .ddr = ddr, .cs_num = cs_num };
@@ -456,4 +456,7 @@ void k1_ddr_eye_measure(uintptr_t ddr, uint32_t cs_num, uint32_t fp,
 	k1_log(env,
 	       "indep: eye training done in %u us, verify %s (%u rank-fails), MR14 check rc %d\n",
 	       (uint32_t)(k1_now(env) - t0), bad ? "FAIL" : "OK", bad, mr14_rc);
+	if (bad)
+		return K1_DDRT_EIO;
+	return mr14_rc;
 }

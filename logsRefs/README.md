@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # logsRefs — experiment reference logs
 
 One directory per hardware experiment whose result matters for the
@@ -36,3 +36,8 @@ finding are not versioned.
 | 011 | [indep-cs1-16gib-soak7](011-indep-cs1-16gib-soak7/readme.md) | done | Seventh FDL of 005 FSBL: **verify OK**. Total 63.6 s. |
 | 012 | [f6-cipa-illegal](012-f6-cipa-illegal/readme.md) | done | F6.2: `dcache.cipa` **illegal instruction** (TVAL `0x02b5000b`) after MHCR.DE. |
 | 013 | [indep-f6-two-stage-16gib](013-indep-f6-two-stage-16gib/readme.md) | done | F6.3 two-stage, cache off: both ranks all fps **verify OK** in **3.16 s**. |
+| 014 | [indep-2666-16gib](014-indep-2666-16gib/readme.md) | done | Independent eye at **2666 MT/s** (`RATE=2666`, PLL1 `0x203c5555`). **verify OK**, `ddr_init rc 0`, 3.32 s. PI fp2 mins 9/8. |
+| 015 | [indep-1333-16gib](015-indep-1333-16gib/readme.md) | done | `RATE=1333` parks at **fp0** with the 2400 PLL (not the 2666 VCO). Independent verify OK, DFC back to fp0, DRAM 0 errors. |
+| 016 | [indep-1200-16gib](016-indep-1200-16gib/readme.md) | done | `RATE=1200`, final **fp0**. Independent verify OK, 3.33 s, DRAM 0 errors. |
+| 017 | [indep-1066-16gib](017-indep-1066-16gib/readme.md) | done | `RATE=1066`, final **fp1**. Independent verify OK, 3.34 s, DRAM 0 errors. |
+| 018 | [indep-cs-num-1-16gib](018-indep-cs-num-1-16gib/readme.md) | done | `CS=1` on the 2-rank 16 GiB package: independent CS0 verify OK, 8192 MB. After a PI retrain, two mid-map probes lose kept content; fresh writes still 0 errors. |

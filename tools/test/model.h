@@ -76,6 +76,7 @@ struct model {
 	uint32_t freq_read_or;		/* stuck bits on CTL_FREQ reads */
 	bool win_alias;			/* the window is the MC: ddr+0x70 feeds the engine too */
 	bool dfc_no_mr14;		/* the DFC engine leaves MR14 alone */
+	bool eye_force_fail;		/* independent pattern always mismatches */
 	/* training state */
 	bool in_sr;
 	bool hung;

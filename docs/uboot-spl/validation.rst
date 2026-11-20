@@ -1,4 +1,4 @@
-.. SPDX-License-Identifier: GPL-2.0-or-later
+.. SPDX-License-Identifier: GPL-3.0-or-later
 
 ==================
 Validation vehicle
@@ -80,6 +80,7 @@ executed on a copy of its configuration), ``OPENSBI`` (``MODE=uboot`` only),
 
 Options: ``EXP=K1_EXP_…`` (an error-injection image,
 :doc:`../firmware/testing`), ``RATE=<MT/s>`` (override ``data_rate``),
+``CS=1`` or ``CS=2`` (override ``cs_num``),
 ``LAT=1`` (DRAM latency meter), ``RESET=`` (no software reset at the end).
 
 The U-Boot validation patch
@@ -96,8 +97,11 @@ to **honour the firmware's return value** (mainline ignores it, :doc:`role`):
 * ``K1_DDR_GPL_TEST``: after the magic-word test, run ``k1_ddr_gpl_retrain_test``
   (fills DRAM probes from the CS map, calls the re-train entry at offset 4 a few
   times, and reports ``kept-errors`` / ``fresh-errors`` per probe);
-* ``K1_VEHICLE_RATE``, ``K1_VEHICLE_UART`` (boot U-Boot proper over ymodem),
-  ``K1_EMMC_TOOL``, ``K1_VEHICLE_RESET`` (software reset back to FDL).
+* ``K1_VEHICLE_RATE``, ``K1_VEHICLE_CS``, ``K1_VEHICLE_UART`` (boot U-Boot proper over ymodem),
+  ``K1_EMMC_TOOL``, ``K1_VEHICLE_RESET`` (software reset; on a 16 GiB BPI-F3
+  with GNU on eMMC, PMIC ``p`` boots eMMC, not BootROM FDL — hold the FDL
+  button). OpenSSL 4 host tools need ``HOSTCFLAGS=-DOPENSSL_ENGINE_STUBS``
+  (``build-vehicle.sh`` sets it).
 
 ``fdl_run.py``
 ==============
@@ -105,9 +109,19 @@ to **honour the firmware's return value** (mainline ignores it, :doc:`role`):
 Loops over one or more FSBLs: waits for the fastboot device, ``fastboot stage``
 + ``fastboot continue``, waits for a marker on the UART (``K1DDRT-DONE``),
 optionally sends U-Boot proper by ymodem and runs commands at the prompt,
-otherwise answers the ``K1VEH: reset?`` prompt to return the board to FDL. After
+otherwise answers the ``K1VEH: reset?`` prompt (``p`` / ``w`` / ``h``). ``p``
+and ``w`` follow the RST path (:dc:`test-platform`): with a valid eMMC image
+that is GNU, not FDL. After
 each run it prints a one-line summary (``ddr_init`` rc, the first fp2 result,
 DRAM errors, whether a U-Boot prompt was reached, ``mtest`` errors).
+
+The BootROM download that ``fastboot stage`` uses enumerates as ``361c:1001``
+(``DFU USB download gadget``, serial ``dfu-device``, manufacturer ``DFU``).
+``361c:0008`` is ADB (Linux, or the ROM ADB face) and is not that download.
+U-Boot proper can also present ``361c:1001`` with manufacturer ``U-Boot`` and
+an empty serial — that is not BootROM FDL. After ``--reset h``, a leftover
+gadget may still list in ``fastboot devices`` and then fail
+``Write to device failed``.
 
 Log prefixes
 ============

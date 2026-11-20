@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 005 — Independent WL+Vref+delay on both ranks (16 GiB)
 
 - **Date:** 2026-11-19

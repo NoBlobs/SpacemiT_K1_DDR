@@ -548,6 +548,7 @@ int main(int argc, char **argv)
 		{ "CS1 CPU buffer from map words", test_cs1_cpu_buf },
 		{ "independent eye, 2 CS, fp2", test_indep_eye_2cs },
 		{ "independent eye linear fallback from a bad seed", test_indep_eye_seed_outside },
+		{ "independent eye verify FAIL is EIO", test_indep_eye_verify_fail },
 	};
 
 	g_log = argc > 1 && !strcmp(argv[1], "-v");

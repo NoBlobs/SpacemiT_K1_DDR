@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 001 — Independent RX/TX delay eye on the 16 GiB Micron board (baseline)
 
 - **Date:** 2026-11-19

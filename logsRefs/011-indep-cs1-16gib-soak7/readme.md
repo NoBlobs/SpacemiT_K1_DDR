@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 011 — CS1 independent eye soak 7 (same FSBL as 005)
 
 - **Date:** 2026-11-19

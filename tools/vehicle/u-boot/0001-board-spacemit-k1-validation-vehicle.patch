@@ -12,7 +12,7 @@ diff --git a/board/spacemit/k1/Makefile b/board/spacemit/k1/Makefile
 index a57af2e..2527e19 100644
 --- a/board/spacemit/k1/Makefile
 +++ b/board/spacemit/k1/Makefile
-@@ -26,3 +26,49 @@ $(FW_TARGET): FORCE
+@@ -26,3 +26,54 @@ $(FW_TARGET): FORCE
  	fi
  
  clean-files += $(FW_TARGET)
@@ -50,6 +50,11 @@ index a57af2e..2527e19 100644
 +# validation only: data_rate handed to ddr_init instead of the EEPROM one
 +ifneq ($(K1_VEHICLE_RATE),)
 +CFLAGS_spl.o += -DK1_VEHICLE_RATE=$(K1_VEHICLE_RATE)
++endif
++
++# validation only: cs_num handed to ddr_init instead of the EEPROM one
++ifneq ($(K1_VEHICLE_CS),)
++CFLAGS_spl.o += -DK1_VEHICLE_CS=$(K1_VEHICLE_CS)
 +endif
 +
 +# validation only: next stage over ymodem, needs CONFIG_SPL_YMODEM_SUPPORT
@@ -738,13 +743,15 @@ index ef23db6..85aac9d 100644
  
  /* boot mode configs */
  #define BOOT_DEV_FLAG_REG	0xd4282d10
-@@ -392,12 +401,32 @@ void ddr_early_init(void)
- 	asm volatile ("fence.i" ::: "memory");
- 
+@@ -404,7 +413,31 @@ void ddr_early_init(void)
  	read_ddr_info(&cfg);
 +#ifdef K1_VEHICLE_RATE
 +	/* validation only: ask the DDR firmware for another rate */
 +	cfg.data_rate = K1_VEHICLE_RATE;
++#endif
++#ifdef K1_VEHICLE_CS
++	/* validation only: train this many ranks, even if EEPROM says 2 */
++	cfg.cs_num = K1_VEHICLE_CS;
 +#endif
  	ddr_init = (ddr_init_func_t)DDR_FIRMWARE_BASE;
 -#ifdef DEBUG
@@ -769,10 +776,7 @@ index ef23db6..85aac9d 100644
 +#endif
 +		return;
 +	}
- 	writel(MAGIC_NUM, (void __iomem *)0x00000000);
- 	flush_dcache_range(0, 64);
- 	invalidate_dcache_range(0, 64);
-@@ -405,6 +434,9 @@ void ddr_early_init(void)
+@@ -420,6 +449,9 @@ void ddr_early_init(void)
  		log_info("DDR is ready\n");
  	else
  		log_info("DDR is not ready\n");

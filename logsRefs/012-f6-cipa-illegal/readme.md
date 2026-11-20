@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 012 — F6.2 T-Head `dcache.cipa` is illegal in ddr_fw
 
 - **Date:** 2026-11-19

@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # 000 — Independent eye measurement by memory-pattern sweep (on hardware)
 
 - **Date:** 2026-11-18
