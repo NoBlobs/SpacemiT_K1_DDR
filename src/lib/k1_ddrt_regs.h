@@ -160,7 +160,7 @@ static constexpr uint32_t K1_CA_MR_READ     = 0x1001'0000;
 static constexpr uint32_t K1_CA_MR_CS_SHIFT = 24;
 static constexpr uint32_t K1_CA_MR_CH_SHIFT = 18;
 static constexpr uint32_t K1_MR_DATA_VALID  = 1u << 31;
-static constexpr uint32_t K1_CA_OP_TXVREF   = 0x1302'000e;
+static constexpr uint32_t K1_CA_OP_TXVREF   = 0x1302'000e; /* k1_ca_mr14(2) */
 static constexpr uint32_t K1_TXVREF_MASK    = 0xffc0'ffff;
 static constexpr uint32_t K1_TXVREF_SHIFT   = 16;
 static constexpr uint32_t K1_TXVREF_FIELD   = 0x3f;
@@ -258,6 +258,12 @@ static constexpr uint32_t K1_BYTE_OFF[K1_N_BYTES] = {
 static inline uint32_t k1_cs_sel(uint32_t cs_num)
 {
 	return cs_num == 1 ? 1 : 3;
+}
+
+/* MR14 write: 0x1102000e (one rank) or 0x1302000e (two ranks). */
+static inline uint32_t k1_ca_mr14(uint32_t cs_num)
+{
+	return K1_CA_MR_WRITE | (k1_cs_sel(cs_num) << K1_CS_SEL_SHIFT) | 14;
 }
 
 static inline uint32_t k1_pack_vref(uint32_t step)

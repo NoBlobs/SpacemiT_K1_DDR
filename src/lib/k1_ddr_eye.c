@@ -287,8 +287,7 @@ static void k1_eye_set_mr14(uintptr_t ddr, uint32_t cs_num, uint32_t vref_dq,
 {
 	k1_rmw32(ddr + K1_MC_TXVREF, K1_TXVREF_MASK,
 		 (vref_dq & K1_TXVREF_FIELD) << K1_TXVREF_SHIFT);
-	k1_w32(ddr + K1_MC_CA_CMD,
-	       K1_CA_MR_WRITE | (k1_cs_sel(cs_num) << K1_CS_SEL_SHIFT) | 14);
+	k1_w32(ddr + K1_MC_CA_CMD, k1_ca_mr14(cs_num));
 	k1_udelay(env, K1_EYE_MRW_US);
 }
 

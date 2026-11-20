@@ -119,10 +119,12 @@ Rate handling — ``k1_ddr_final_fp()``
      - 1
    * - 2133
      - 3 for LPDDR4, 0 for LPDDR4X
+   * - 1333
+     - 0 (PLL1 at the 2666 VCO; fp0 ≈1333 MT/s)
    * - anything else (1200, 1600, 0, 2667, 2700, 3200, 4266 …)
-     - 0
+     - 0 (PLL1 at the 2400 VCO)
 
-The PLL1 programming depends only on ``data_rate == 2666``
+The PLL1 programming uses the 2666 pair when ``data_rate`` is 2666 or 1333
 (:doc:`controller-init`); every other value uses the 2400 setting.
 
 Pass plan — ``k1_ddr_dfc_plan()``
@@ -144,7 +146,7 @@ The frequency points trained after the second fp0 pass, in order:
 So an LPDDR4X boot always runs **four** passes (fp0, fp0, fp1, fp2) and
 **three** DFCs (fp1, fp2, final), regardless of the requested rate: the final
 DFC is issued even when the final fp is the one just trained (it is idempotent),
-and for a 1066/1200 request the final DFC goes back down from fp2. The report
+and for a 1066/1200/1333 request the final DFC goes back down from fp2. The report
 keeps up to five pass summaries (enough for LPDDR4).
 
 x8 handling

@@ -67,7 +67,7 @@ Files and public API
      - ``k1_log``, ``k1_now``, ``k1_wait``, ``k1_wait_n``, ``k1_udelay``
    * - ``lib/k1_ddrt_regs.h``
      - Register map as ``static constexpr`` constants
-     - ``k1_freq_bank``, ``k1_cs_sel``, ``k1_pack_vref`` inline helpers
+     - ``k1_freq_bank``, ``k1_cs_sel``, ``k1_ca_mr14``, ``k1_pack_vref`` inline helpers
    * - ``lib/k1_ddrt_io.h``
      - MMIO accessors
      - ``k1_r32``, ``k1_w32``, ``k1_rmw32``

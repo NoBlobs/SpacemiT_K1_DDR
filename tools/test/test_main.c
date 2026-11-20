@@ -166,6 +166,7 @@ static void test_happy_2cs(void)
 	CHECK_EQ(model_peek(DDR + K1_MC_PI_CFG), 2 << 2);
 	CHECK_EQ(model_peek(DDR + K1_MC_TXVREF), 0x8000'1234 | ((21 + tx) << 16));
 	CHECK_EQ(g_model.die_mr14[1][1], 21 + tx);
+	CHECK_EQ(model_peek(DDR + K1_MC_CA_CMD), K1_CA_OP_TXVREF);
 
 	CHECK_EQ(g_model.sr_enter_cmd, 0x1300'0040);
 	CHECK_EQ(g_model.sr_exit_cmd, 0x1300'0080);
@@ -204,6 +205,7 @@ static void test_happy_1cs(void)
 	model_reset(DDR, 0, 1);
 	CHECK_EQ(run_pass(1, &r), K1_DDRT_OK);
 	CHECK_CLEAN();
+	CHECK_EQ(model_peek(DDR + K1_MC_CA_CMD), k1_ca_mr14(1));
 	CHECK_EQ(g_model.sr_enter_cmd, 0x1100'0040);
 	CHECK_EQ(g_model.sr_exit_cmd, 0x1100'0080);
 	CHECK_EQ(model_peek(DDR + K1_MC_STATUS), 0x31);
@@ -537,6 +539,7 @@ int main(int argc, char **argv)
 		{ "hardware DFC", test_dfc },
 		{ "full boot 8 GiB x8 2 CS 2400", test_full_boot_8g },
 		{ "full boot 4 GiB x16 1 CS 2666", test_full_boot_1cs },
+		{ "full boot 1333 uses the 2666 VCO at fp0", test_full_boot_1333 },
 		{ "full boot at every data rate", test_full_boot_rates },
 		{ "full boot 16 GiB adds MR21", test_full_boot_16g },
 		{ "full boot: first MRR after DFC(2)", test_full_boot_fsp },

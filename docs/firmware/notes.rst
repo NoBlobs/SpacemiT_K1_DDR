@@ -19,12 +19,13 @@ This keeps one code path for every rate at the cost of extra passes; every
 frequency point the controller may later switch to is trained. The final DFC is
 issued even when the final fp is the one just trained.
 
-PLL1 is programmed for 2400 unless 2666 is requested
-----------------------------------------------------
+PLL1 is programmed for 2400 unless 2666 or 1333 is requested
+-----------------------------------------------------------
 
-``k1_ddr_pll_init()`` checks only ``data_rate == 2666``. Every other value,
-including 1066, 1200 and 2133, gets the 2400 setting, which then drives fp0
-(PLL1/2) and fp2 (PLL1/1).
+``k1_ddr_pll_init()`` writes the 2666 pair when ``data_rate`` is 2666 or 1333.
+Every other value, including 1066, 1200 and 2133, gets the 2400 setting, which
+then drives fp0 (PLL1/2) and fp2 (PLL1/1). With the 2666 VCO, fp0 is ≈1333 MT/s
+and fp2 is 2666 MT/s.
 
 Range checks never fail the boot (PI harvest path)
 --------------------------------------------------
@@ -36,15 +37,16 @@ those harvest checks are skipped on cold boot and on the re-train entry; the
 boot fails only when the independent memory-pattern verify (or MR14) fails
 (:doc:`acceptance-and-logging`).
 
-``data_rate`` 1333 is not 1333 MT/s
-----------------------------------
+``data_rate`` 1333 is the 2666 VCO at fp0
+----------------------------------------
 
-``k1_ddr_final_fp()`` has no 1333 case (it falls through to fp0).
-``k1_ddr_pll_init()`` programmes the 2666 VCO only when ``data_rate == 2666``.
-A SPL request of 1333 therefore parks at fp0 with the **2400** PLL1 pair
-(1200 MT/s). The 1333 MT/s characterisation in the specification uses the
-2666 VCO on fp0. Measured on the 16 GiB Micron board: independent verify OK
-at that mapping, DRAM probes 0 errors.
+``k1_ddr_final_fp()`` parks 1333 at fp0 (the same MC bank and DFC entry as
+1200). ``k1_ddr_pll_init()`` programmes the **2666** PLL1 pair, so fp0 runs at
+≈1333 MT/s and the fp2 training pass runs at 2666 MT/s. Confirmed on the 8 GiB
+Samsung (`logsRefs/026-indep-1333-vco-8gib`) and 16 GiB Micron
+(`logsRefs/027-indep-1333-vco-16gib`) boards: PLL1 ``0x203c5555``, PI fp2
+mins 9/8, independent verify OK. Logs 015 and 023 measured the previous
+mapping (2400 VCO, 1200 MT/s at that request).
 
 Mainline cannot see a failure
 -----------------------------
@@ -83,20 +85,6 @@ contributor and the re-train entry holds two of them.
 Limitations
 ===========
 
-One rank: the training MR14 command addresses both ranks
---------------------------------------------------------
-
-``k1_set_mr14()`` in ``k1_ddrt.c`` always sends ``K1_CA_OP_TXVREF = 0x1302000e``,
-the two-rank form, even when ``cs_num == 1``. Everywhere else
-(``k1_ddr_mr_write()``, the DFC table rewrite) the rank byte follows ``cs_sel``.
-The test model accepts the two-rank form in self-refresh regardless of the rank
-count, so the tests do not catch it. Observed on the 16 GiB Micron **two-rank**
-package with SPL ``cs_num 1``: independent CS0 verify passed; a following PI
-pass (which still issues ``0x1302000e``) did not keep DRAM at ``0x40000000``
-and ``0x1c0000000``. Closing it: build the command as ``K1_CA_MR_WRITE |
-(cs_sel << 24) | 14``, make the model reject a rank byte that names an absent
-rank, and add a mutant. A true one-rank board is still unmeasured.
-
 One rank: MISC entries of the DFC table keep the two-rank byte
 --------------------------------------------------------------
 
@@ -125,7 +113,11 @@ The rank count is trusted
 
 ``cs_num`` comes from the caller (the SPL's EEPROM read, default 2). The firmware
 does not probe for a second rank. A wrong ``cs_num`` shows up as a training or
-DFC failure, not as a clear message.
+DFC failure, not as a clear message. Observed on the 16 GiB Micron two-rank
+package with SPL ``cs_num 1``: independent CS0 verify passed; a following PI
+pass did not keep DRAM at ``0x40000000`` and ``0x1c0000000``. Repeating that
+run after ``k1_set_mr14()`` followed ``cs_sel`` left those kept-errors
+unchanged (`logsRefs/019-mr14-cs-sel-cs1-16gib`).
 
 LPDDR4 (non-X) is implemented but disabled
 ------------------------------------------

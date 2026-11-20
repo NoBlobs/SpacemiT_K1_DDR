@@ -67,6 +67,7 @@ void test_dfc(void);
 void test_dfc_stuck(void);
 void test_full_boot_8g(void);
 void test_full_boot_1cs(void);
+void test_full_boot_1333(void);
 void test_full_boot_rates(void);
 void test_full_boot_16g(void);
 void test_full_boot_fsp(void);

@@ -66,8 +66,8 @@ Timing constants
    PLL1 words, ``mck``), for the record.
 #. PLL1:
 
-   * ``data_rate == 2666``: writes ``PLL1_CTL1 = 0x203c5555``,
-     ``PLL1_CTL2 = 0x50dd6538``;
+   * ``data_rate == 2666`` or ``1333``: writes ``PLL1_CTL1 = 0x203c5555``,
+     ``PLL1_CTL2 = 0x50dd6538`` (1333 parks at fp0, so this VCO is ≈1333 MT/s);
    * anything else: read-modify-write of ``PLL1_CTL1[15:8] = 0x3B``,
      ``PLL1_CTL2`` left as found.
 

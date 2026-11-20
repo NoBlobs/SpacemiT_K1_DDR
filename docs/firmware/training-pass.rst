@@ -166,7 +166,8 @@ Write training — ``k1_stage_tx()``
 
    PI_WR_CFG = 0x1810
    for i 0..15:
-           set_mr14(21 + i)          TXVREF[21:16] = value; CA_CMD = 0x1302000e
+           set_mr14(21 + i)          TXVREF[21:16] = value;
+                                    CA_CMD = 0x10020000 | cs_sel << 24 | 14
            for cs 1..cs_num:
                    WR (0x10080000, done 0x60)
                    m = worst DQ margin of harvest TX
@@ -252,5 +253,6 @@ order (SR enter, PHY_INIT, WL, gate, Rx, Tx, SR exit), each CFG written exactly
 once and before its first operation, 17 MR14 commands, 17 RD and 17 WR
 operations per rank, the re-applied winner's taps left in the PHY,
 first-of-plateau selection, the Tx all-zero fallback to MR14 25, the minimum
-taken over every rank and DQ, SR exit after every kind of failure, and that bad
-arguments cause no register access.
+taken over every rank and DQ, the MR14 CA command following ``cs_sel`` (one
+rank ``0x1102000e``, two ranks ``0x1302000e``), SR exit after every kind of
+failure, and that bad arguments cause no register access.

@@ -94,8 +94,9 @@ int k1_ddr_pll_init(const struct k1_ddr_hw *hw, uint32_t data_rate,
 	       k1_r32(k1_pmu(hw, K1_PMU_PLL1_CTL2)),
 	       k1_r32(k1_pmu(hw, K1_PMU_MCK_CTRL)));
 
-	/* 2666: complete pair. 2400: RMW leftover [15:8]=0x3B, leave +0x3a0. */
-	if (data_rate == 2666) {
+	/* 2666 and 1333: complete pair (fp0 = PLL1/2 ≈1333). 2400: RMW leftover
+	 * [15:8]=0x3B, leave +0x3a0. */
+	if (data_rate == 2666 || data_rate == 1333) {
 		k1_w32(k1_pmu(hw, K1_PMU_PLL1_CTL1), K1_PLL1_2666);
 		k1_w32(k1_pmu(hw, K1_PMU_PLL1_CTL2), K1_PLL1_ANALOG);
 	} else {

@@ -69,7 +69,10 @@ Standard RISC-V LP64 calling convention, entered at **offset 0** of the image
      -
    * - 1200
      - 0
-     -
+     - PLL1 VCO for 2400; fp0 is 1200 MT/s
+   * - 1333
+     - 0
+     - PLL1 VCO for 2666; fp0 is ≈1333 MT/s (same MC bank as 1200)
    * - 2133
      - 0 (LPDDR4X)
      - no fp3 on LPDDR4X; the final DFC goes back to fp0
@@ -78,9 +81,8 @@ Standard RISC-V LP64 calling convention, entered at **offset 0** of the image
      - treated as 1200; never rounded up to 2666
 
 The firmware's ``k1_ddr_final_fp()`` implements this mapping
-(:doc:`../firmware/boot-sequence`). On this image, which is built for LPDDR4X,
-the 1333 special case of the specification (PLL1 at the 2666 VCO, final fp0) is
-not selected: PLL1 uses the 2400 setting for every rate except 2666.
+(:doc:`../firmware/boot-sequence`). ``k1_ddr_pll_init()`` writes the 2666 PLL1
+pair when ``data_rate`` is 2666 or 1333.
 
 What the ABI does not carry
 ===========================

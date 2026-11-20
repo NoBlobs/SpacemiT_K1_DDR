@@ -402,7 +402,7 @@ static void k1_set_mr14(struct k1_pass *p, uint32_t vref_dq)
 {
 	k1_rmw32(p->ddr + K1_MC_TXVREF, K1_TXVREF_MASK,
 		 (vref_dq & K1_TXVREF_FIELD) << K1_TXVREF_SHIFT);
-	k1_w32(p->ddr + K1_MC_CA_CMD, K1_CA_OP_TXVREF);
+	k1_w32(p->ddr + K1_MC_CA_CMD, k1_ca_mr14(p->cs_num));
 }
 
 static int k1_stage_tx(struct k1_pass *p)

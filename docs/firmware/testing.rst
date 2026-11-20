@@ -23,13 +23,13 @@ the model and the scripts live in ``tools/test/``.
      - each error-injection flag produces exactly the failure it is meant to
        produce
    * - ``make mutate``
-     - the suite actually detects deliberate bugs (122 mutants)
+     - the suite actually detects deliberate bugs (123 mutants)
    * - ``make check-tables SPEC_DOCS=…``
      - every register value in the code matches the specification tables
        (265 facts)
 
 A full run of the suite prints one ``ok``/``FAIL`` line per test and ends with
-``1578 checks, 0 failures``. Independent-eye cases include a 2-rank train, a
+``1580 checks, 0 failures``. Independent-eye cases include a 2-rank train, a
 linear fallback from a seed outside the window, and a forced pattern mismatch
 that must return ``K1_DDRT_EIO``.
 
@@ -180,7 +180,7 @@ for the board (``EXP=…``, :doc:`../uboot-spl/validation`).
 Mutation testing (``mutate.py``)
 ================================
 
-122 mutants, each a ``(name, file, old text, new text)`` substitution in one
+123 mutants, each a ``(name, file, old text, new text)`` substitution in one
 source file. For each mutant the runner copies ``src/`` and ``tools/`` to a
 temporary directory, applies the substitution under ``src/``, and runs
 ``make test`` there (with ``WARN=`` so a mutant that only triggers a warning

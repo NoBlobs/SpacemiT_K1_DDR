@@ -1020,9 +1020,13 @@ static void write_user0(uint32_t v)
 
 static void write_ca(uint32_t v)
 {
-	if (v == K1_CA_OP_TXVREF && g_model.in_sr) {
+	if ((v & 0xf0ff'00ff) == (K1_CA_MR_WRITE | 14) && g_model.in_sr) {
+		const uint32_t sel = (v >> K1_CS_SEL_SHIFT) & 0xf;
+
 		if (!g_model.dram_ready)
 			violate("MR14 write before DRAM init");
+		if (sel != expected_sel())
+			violate("MR14 write 0x%08x with cs 0x%x", v, sel);
 		set_die_mr14_from_bank(regs[K1_MC_FREQ / 4] >> K1_FREQ_PP_SHIFT);
 		record(EV_MR14_SET);
 		return;

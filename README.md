@@ -142,12 +142,17 @@ tree that holds the signing tool (`VENDOR_UBOOT=`), which is only executed.
 
 ## Status
 
-- Reference board (BPI-F3, 8 GiB Samsung LPDDR4X, 2 ranks, x8): the complete
-  sequence is characterized at 2400 MT/s and at 2666 MT/s, the SoC maximum.
+- Reference board (BPI-F3, 8 GiB Samsung LPDDR4X, 2 ranks, x8): independent
+  WL+Vref+delay is measured on both ranks at SPL `data_rate` 1066, 1200, 1333,
+  2400 and 2666 (`cs_num 2` from EEPROM/default; verify OK; about 3.3–3.4 s).
+  Log 023 used the 2400 VCO at `RATE=1333`; 026 confirms the 2666 VCO
+  (PLL1 `0x203c5555`, PI fp2 mins 9/8) at that request.
 - 16 GiB Micron BPI-F3 (`MT53E4G32D8`, 2 ranks): independent write leveling,
   RX/TX Vref and delay training is measured on both ranks at every frequency
   point (verify OK; two-stage search about 3.2 s) at SPL `data_rate` 1066,
-  1200, 1333, 2400 and 2666. `ddr_init` returns an error if that verify
+  1200, 1333, 2400 and 2666. `data_rate` 1333 programmes the 2666 PLL1 VCO
+  and parks at fp0 (≈1333 MT/s; 026/027). Logs 015/023 used the 2400 VCO at
+  that request. `ddr_init` returns an error if that verify
   fails. The DQS read-gate stays with the PI. `cs_num 1` on this two-rank
   package trains CS0 only (8 GiB mapped); a following PI pass does not keep
   DRAM at two mid-window addresses.

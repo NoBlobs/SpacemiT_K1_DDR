@@ -47,6 +47,8 @@ uint32_t k1_ddr_final_fp(enum k1_ddr_type type, uint32_t data_rate)
 	case 2400:
 	case 2666:
 		return 2;
+	case 1333:	/* same fp0 bank as 1200; PLL1 uses the 2666 VCO */
+		return 0;
 	default:
 		return 0;
 	}

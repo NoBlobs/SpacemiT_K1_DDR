@@ -41,3 +41,12 @@ finding are not versioned.
 | 016 | [indep-1200-16gib](016-indep-1200-16gib/readme.md) | done | `RATE=1200`, final **fp0**. Independent verify OK, 3.33 s, DRAM 0 errors. |
 | 017 | [indep-1066-16gib](017-indep-1066-16gib/readme.md) | done | `RATE=1066`, final **fp1**. Independent verify OK, 3.34 s, DRAM 0 errors. |
 | 018 | [indep-cs-num-1-16gib](018-indep-cs-num-1-16gib/readme.md) | done | `CS=1` on the 2-rank 16 GiB package: independent CS0 verify OK, 8192 MB. After a PI retrain, two mid-map probes lose kept content; fresh writes still 0 errors. |
+| 019 | [mr14-cs-sel-cs1-16gib](019-mr14-cs-sel-cs1-16gib/readme.md) | done | `k1_set_mr14()` with `cs_sel` (`0x1102000e`): PI TX + independent verify **OK**, `ddr_init rc 0`. Retrain kept-errors at the two mid-map probes **unchanged** vs 018. |
+| 020 | [eeprom-cs-num-16gib](020-eeprom-cs-num-16gib/readme.md) | done | No `CS=` override: EEPROM `cs_num 2`, 16384 MB, both ranks **verify OK**, DRAM 0 errors after boot and PI retrain. |
+| 021 | [eeprom-cs-num-8gib](021-eeprom-cs-num-8gib/readme.md) | done | Same image on the **8 GiB Samsung** (`ttyUSB0`): `cs_num 2`, `MR8 0x52`, 8192 MB, both ranks **verify OK**, DRAM 0 errors after boot and PI retrain. |
+| 022 | [indep-2666-8gib](022-indep-2666-8gib/readme.md) | done | Independent eye at **2666 MT/s** on 8 GiB (`RATE=2666`, PLL1 `0x203c5555`). **verify OK**, `ddr_init rc 0`, 3.34 s. PI fp2 mins 9/8. |
+| 023 | [indep-1333-8gib](023-indep-1333-8gib/readme.md) | done | `RATE=1333` on 8 GiB parks at **fp0** with the 2400 PLL. Independent verify OK, DFC back to fp0, DRAM 0 errors. |
+| 024 | [indep-1200-8gib](024-indep-1200-8gib/readme.md) | done | `RATE=1200` on 8 GiB, final **fp0**. Independent verify OK, 3.36 s, DRAM 0 errors. |
+| 025 | [indep-1066-8gib](025-indep-1066-8gib/readme.md) | done | `RATE=1066` on 8 GiB, final **fp1**. Independent verify OK, 3.39 s, DRAM 0 errors. |
+| 026 | [indep-1333-vco-8gib](026-indep-1333-vco-8gib/readme.md) | done | `RATE=1333` with the **2666 VCO** at fp0. PLL1 `0x203c5555`, PI fp2 mins 9/8, verify OK, 3.17 s. |
+| 027 | [indep-1333-vco-16gib](027-indep-1333-vco-16gib/readme.md) | done | Same 2666 VCO at fp0 on **16 GiB Micron**. PI fp2 mins 9/8, verify OK, 3.13 s. |

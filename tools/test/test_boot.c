@@ -144,6 +144,7 @@ void test_rate_plan(void)
 	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4, 2133), 3);
 	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4X, 2400), 2);
 	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4X, 2666), 2);
+	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4X, 1333), 0);
 	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4X, 1600), 0);
 	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4X, 0), 0);
 	CHECK_EQ(k1_ddr_final_fp(K1_DDR_LPDDR4X, 2700), 0);
@@ -184,6 +185,13 @@ void test_pll_init(void)
 	model_reset_por(DDR, 2);
 	hw = k1_ddr_hw_init(&c26, &g_env);
 	CHECK_EQ(k1_ddr_pll_init(&hw, 2666, &step), K1_DDRT_OK);
+	CHECK_CLEAN();
+	CHECK_EQ(pmur(K1_PMU_PLL1_CTL1), 0x203c'5555);
+	CHECK_EQ(pmur(K1_PMU_PLL1_CTL2), 0x50dd'6538);
+
+	model_reset_por(DDR, 2);
+	hw = k1_ddr_hw_init(&c26, &g_env);
+	CHECK_EQ(k1_ddr_pll_init(&hw, 1333, &step), K1_DDRT_OK);
 	CHECK_CLEAN();
 	CHECK_EQ(pmur(K1_PMU_PLL1_CTL1), 0x203c'5555);
 	CHECK_EQ(pmur(K1_PMU_PLL1_CTL2), 0x50dd'6538);
@@ -796,6 +804,22 @@ void test_full_boot_1cs(void)
 	CHECK_EQ(rep.ctl_freq, 0xa080'0400);
 	CHECK_EQ(g_model.n_dfc, 3);
 	CHECK_EQ(g_model.dfc_fp[2], 2);
+}
+
+void test_full_boot_1333(void)
+{
+	struct k1_ddr_boot_report rep;
+
+	model_reset_por(DDR, 2);
+	CHECK_EQ(run_boot(2, 1333, &rep), K1_DDRT_OK);
+	CHECK_CLEAN();
+	CHECK_EQ(rep.final_pp, 0);
+	CHECK_EQ(pmur(K1_PMU_PLL1_CTL1), 0x203c'5555);
+	CHECK_EQ(pmur(K1_PMU_PLL1_CTL2), 0x50dd'6538);
+	CHECK_EQ(g_model.n_dfc, 3);
+	CHECK_EQ(g_model.dfc_fp[2], 0);
+	CHECK_EQ(rep.ctl_freq, k1_freq_bank(0));
+	CHECK_EQ(rep.clksel & 0xffff, k1_clksel[0]);
 }
 
 void test_full_boot_rates(void)

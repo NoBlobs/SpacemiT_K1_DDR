@@ -14,11 +14,11 @@ PLLs and the data rate
 ======================
 
 PLL1 carries the data-rate-dependent VCO. The two settings the firmware uses are
-2400 and 2666 MT/s; every other requested rate is served by the 2400 setting
-driving the right frequency point. 2666 is the SoC maximum and trains with
-smaller margins (shorter unit interval). A ≈1333 MT/s operating point exists in
-the silicon (PLL1 at the 2666 VCO, ending at fp0), but the LPDDR4X image does not
-select it (:doc:`../uboot-spl/boot-interface`).
+2400 and 2666 MT/s. ``data_rate`` 2666 and 1333 take the 2666 pair; every other
+requested rate is served by the 2400 setting driving the right frequency point.
+2666 is the SoC maximum and trains with smaller margins (shorter unit interval).
+A ≈1333 MT/s operating point is PLL1 at the 2666 VCO, ending at fp0
+(:doc:`../uboot-spl/boot-interface`).
 
 Clock-select, lock and SW-FC
 ============================
